@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\绫小路清隆\\.ohos\\config\\default_Harflix_SJ0lzUJQK14rEKp9zwb71g5Yh5cEviWz82G9oNKPAII=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B20A860F038F818E26C2E5D7B3F85131DBCBB7FBA96B71AC1D8EA3F4615B5AA7DF27E343688CB95",
+          "profile": "C:\\Users\\绫小路清隆\\.ohos\\config\\default_Harflix_SJ0lzUJQK14rEKp9zwb71g5Yh5cEviWz82G9oNKPAII=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\绫小路清隆\\.ohos\\config\\default_Harflix_SJ0lzUJQK14rEKp9zwb71g5Yh5cEviWz82G9oNKPAII=.p12",
+          "storePassword": "0000001BB5FF2A49656ACE7E0CF262ABAD77F4982FDF93577F6B91108F3D5C1E41B9EF5BAEC8BEAC5E9433"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "5.0.5(17)",
+        "compatibleSdkVersion": "5.0.5(17)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug"
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/AddEmby",
+    "pages/EpisodeList",
+    "pages/Details",
+    "pages/IjkVideoPlayer",
+    "pages/SearchPage",
+    "pages/Aboutapp"
+  ]
+}

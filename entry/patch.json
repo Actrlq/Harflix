@@ -1,0 +1,11 @@
+{
+  "app": {
+    "bundleName": "com.Actrlq.harflix",
+    "patchVersionCode": 2000639,
+    "versionCode": 251130
+  },
+  "module": {
+    "name": "entry",
+    "type": "hotreload"
+  }
+}

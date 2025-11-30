@@ -1,37 +1,24 @@
-# Harflix
+<p align="center"><img src="./entry/src/main/resources/base/media/app_logo.png" style="width: 128px; height: 128px;"  alt="logo"></p>
+<div align="center">
+    <h1>Harflix播放器</h1>
+    <p></p>
+</div>
+<p align="center">Harflix是运行在 HarmonyOS Next 上的应用，可连接Emby服务器</p>
 
-#### 介绍
-鸿蒙Emby播放器
+## 前言
 
-#### 软件架构
-软件架构说明
+写这个是为了学习鸿蒙开发，平时只有闲暇之余写一下，使用过程中可能会遇到很多BUG，如果你想软件使用更美观、更流畅、更丝滑，请在issues详细写出问题原因和问题位置，由于本人对编程并不太熟练，BUG修复不一定及时，所以不要催更！！！
 
+## 规划
 
-#### 安装教程
+目前已手机开发为主，平板和PC后期慢慢适配，目前没有鸿蒙系统的平板和PC，所以应用UI方面只能根据模拟器进行开发
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+## 功能
 
-#### 使用说明
+首页图标可切换服务器，有些服务器采用应用白名单模式，可以会有些服务器用不了，你可以反馈对应服务器增加本软件到白名单，这样可以用使用了
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+## 赞助作者
 
-#### 参与贡献
+- 如果你喜欢本项目，觉得本项目还不错，可以支持一下作者。
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+<img src="images/SKM.jpg" width="260" alt="">
