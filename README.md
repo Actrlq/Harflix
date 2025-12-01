@@ -1,4 +1,6 @@
-<p align="center"><img src="./entry/src/main/resources/base/media/app_logo.png" style="width: 128px; height: 128px;"  alt="logo"></p>
+<p align="center">
+<img src='./entry/src/main/resources/base/media/app_logo.png' width="128" height="128" alt="logo">
+</p>
 <div align="center">
     <h1>Harflix播放器</h1>
     <p></p>
