@@ -12,7 +12,7 @@ export struct SeasonList {
   @Link videoId: string
   @State onChoose: number = 1
   @State @Watch('onSeasonIdChanged') SeasonId: string = ''
-  @State serverUrl:string = ''
+  @State serverUrl: string = ''
 
   aboutToAppear(): void {
     this.fetchSeason().then(() => {
@@ -44,20 +44,24 @@ export struct SeasonList {
     Column() {
       if (this.SeasonNumber.length > 0) {
         Flex({ direction: FlexDirection.Column }) {
-          Row() {
-            ForEach(this.SeasonNumber, (item: SLItems) => {
-              Text(`第 ${item.IndexNumber} 季`)
-                .fontSize(BasicConstants.FONT_NORMAL)
-                .margin({ right: 10 })
-                .padding({ bottom: 5 })
-                .borderWidth({ bottom: this.onChoose == item.IndexNumber ? 2 : 0 })
-                .onClick(() => {
-                  this.onChoose = item.IndexNumber
-                  this.SeasonId = item.Id
-                })
-            }, (item: SLItems) => item.IndexNumber.toString())
+          Scroll() {
+            Row() {
+              ForEach(this.SeasonNumber, (item: SLItems) => {
+                Text(`第 ${item.IndexNumber} 季`)
+                  .fontSize(BasicConstants.FONT_NORMAL)
+                  .margin({ right: 10 })
+                  .padding({ bottom: 5 })
+                  .borderWidth({ bottom: this.onChoose == item.IndexNumber ? 2 : 0 })
+                  .onClick(() => {
+                    this.onChoose = item.IndexNumber
+                    this.SeasonId = item.Id
+                  })
+              }, (item: SLItems) => item.IndexNumber.toString())
+            }
+            .margin({ bottom: 5 })
           }
-          .margin({ bottom: 5 })
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
 
           List({ space: 5 }) {
             ForEach(this.SeasonData.filter((item: VRItems) => item.ParentIndexNumber === this.onChoose),
@@ -76,10 +80,11 @@ export struct SeasonList {
                       .onClick(() => {
                         this.videoId = item.Id
                       })
+                      .layoutWeight(1)
 
                       Column() {
                         Image($r('app.media.right'))
-                          .height(30)
+                          .height(25)
                           .visibility(ObjectUtil.getValue<boolean>(item.UserData, 'Played') ? Visibility.Visible :
                             Visibility.None)
                       }

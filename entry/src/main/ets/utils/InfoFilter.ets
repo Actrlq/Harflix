@@ -5,6 +5,7 @@ export interface SubtitleList {
   index: number // 序号
   displayLanguage: string // 字幕语言
   type: string // 类型
+  isDefault: boolean // 默认值
 }
 
 export interface VideoInfo {
@@ -14,9 +15,18 @@ export interface VideoInfo {
   videoRange: string // 动态范围
 }
 
+export interface AudioList {
+  codec: string // 编码器
+  displayTitle: string // 标题
+  displayLanguage: string // 显示音频
+  index: number // 序号
+  isDefault: boolean // 默认值
+}
+
 export class InfoFilter {
   private subtitles: SubtitleList[] = []
   private videoInfo: VideoInfo[] = []
+  private audio: AudioList[] = []
 
   //筛选字幕
   filterSubtitle(resText: MediaStreams[]) {
@@ -28,12 +38,14 @@ export class InfoFilter {
         const index = res.Index
         const displayLanguage = res.DisplayLanguage
         const type = res.Type
+        const isDefault = res.IsDefault
 
         const subtitle: SubtitleList = {
           codec: codec,
           index: index,
           displayLanguage: displayLanguage,
           type: type,
+          isDefault: isDefault
         }
         lists.push(subtitle)
       }
@@ -67,4 +79,31 @@ export class InfoFilter {
     this.videoInfo = data
     return this.videoInfo
   }
+
+  //筛选音频
+  filterAudio(resText: MediaStreams[]){
+    const lists: AudioList[] = []
+    for (const res of resText) {
+      if (res.Type === 'Audio') {
+
+        const codec = res.Codec
+        const index = res.Index
+        const displayLanguage = res.DisplayLanguage
+        const displayTitle = res.DisplayTitle
+        const isDefault = res.IsDefault
+
+        const audio: AudioList = {
+          codec: codec,
+          index: index,
+          displayLanguage: displayLanguage,
+          displayTitle: displayTitle,
+          isDefault: isDefault
+        }
+        lists.push(audio)
+      }
+    }
+    this.audio = lists
+    return this.audio
+  }
+
 }

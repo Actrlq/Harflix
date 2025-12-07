@@ -15,17 +15,16 @@ export struct MediaLibrary {
   @State WatchList: Array<VRItems> = []
   @State serverUrl: string = ''
   //数据库监听
-  private callBack: Callback<distributedKVStore.ChangeNotification> = () => {
-    this.ViewList = []
-    this.WatchList = []
-    this.MediaList = []
-    this.servername = ''
-    this.fetchServerViews().then(() => {
-      this.AddonData()
-    })
-    this.fetchViewingRecord()
-    this.getServername()
-    this.fetchKeydata()
+  private callBack: Callback<distributedKVStore.ChangeNotification> = (key) => {
+    if (key.updateEntries[0]?.key === 'FirstLoad') {
+      this.fetchServerViews().then(() => {
+        this.AddonData()
+      })
+      this.fetchViewingRecord()
+      this.fetchServerUrl()
+      this.getServername()
+      this.fetchKeydata()
+    }
   }
   private embyList: UserInfo[] = []
   //弹窗状态
@@ -107,14 +106,15 @@ export struct MediaLibrary {
         .width('90%')
         .margin(5)
         .onClick(()=>{
-          KvUtil.put('FirstLoad','emby_' + item.userId)
-          this.fetchServerViews().then(() => {
-            this.AddonData()
+          KvUtil.put('FirstLoad','emby_' + item.userId).then(()=>{
+            this.fetchServerViews().then(() => {
+              this.AddonData()
+            })
+            this.fetchViewingRecord()
+            this.fetchServerUrl()
+            this.getServername()
+            this.isShow = false
           })
-          this.fetchViewingRecord()
-          this.fetchServerUrl()
-          this.getServername()
-          this.isShow = false
         })
       }, (item: UserInfo) => item.token)
     }
@@ -128,8 +128,8 @@ export struct MediaLibrary {
       })
       this.fetchViewingRecord()
       this.fetchServerUrl()
-      this.getServername()
       this.fetchKeydata()
+      this.getServername()
     } else {
       ToastUtil.showToast('网络不可用')
     }
@@ -141,6 +141,8 @@ export struct MediaLibrary {
   }
 
   fetchServerViews = async () => {
+    this.MediaList = []
+    this.ListId = []
     const res = await FetchServerViewsApi<ServerViews>()
     this.MediaList = res.Items
     this.ListId = res.Items.filter(items => items.Name !== '播放列表').map((item: SVItems) => item.Id)
@@ -150,15 +152,18 @@ export struct MediaLibrary {
     this.ViewList.push(res)
   }
   AddonData = async () => {
+    this.ViewList = []
     for (const item of this.ListId) {
       await this.fetchNewViewsList(item)
     }
   }
   fetchViewingRecord = async () => {
+    this.WatchList = []
     const res = await FetchViewingRecordApi<ViewingRecord>()
     this.WatchList = res.Items
   }
   fetchServerUrl = async () => {
+    this.serverUrl = ''
     const res = await FetchServerUrl()
     this.serverUrl = res
   }
@@ -234,13 +239,13 @@ export struct MediaLibrary {
             .width('10%')
             .onClick(async () => {
               if (NetworkUtil.isNetworkAvailable()) {
-                this.ViewList = []
-                this.WatchList = []
-                this.MediaList = []
                 this.fetchServerViews().then(() => {
                   this.AddonData()
                 })
                 this.fetchViewingRecord()
+                this.fetchServerUrl()
+                this.getServername()
+                this.fetchKeydata()
               } else {
                 ToastUtil.showToast('网络不可用')
               }
@@ -309,12 +314,13 @@ export struct MediaLibrary {
                   .fontSize(BasicConstants.FONT_BIG)
                   .height(25)
                   .fontWeight(FontWeight.Bold)
-                List({ space: 10 }) {
+                List({ space: 5 }) {
                   ForEach(this.MediaList.filter(items => items.Name !== '播放列表'), (item: SVItems) => {
                     ListItem() {
                       Flex({ direction: FlexDirection.Column }) {
                         Flex({ justifyContent: FlexAlign.Center }) {
                           Image(this.serverUrl + FetchImagePrimary(item.Id) + '?maxWidth=400')
+                            .alt($r('app.media.Image_loading_failed'))
                         }
                         .width('100%')
                         .borderRadius(10)

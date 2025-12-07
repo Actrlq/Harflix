@@ -1,5 +1,5 @@
 <p align="center">
-<img src='./entry/src/main/resources/base/media/app_logo.png' width="128" height="128" alt="logo">
+<img src='./entry/src/main/resources/base/media/app_logo.png' width="100" height="100" alt="logo">
 </p>
 <div align="center">
     <h1>Harflix播放器</h1>

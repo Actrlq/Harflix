@@ -1,8 +1,8 @@
 export class UserServerInformation {
-  ServerName: string = ''
-  ServerUrl: string = ''
-  Username: string = ''
-  Password: string = ''
+  ServerName?: string
+  ServerUrl?: string
+  Username?: string
+  Password?: string
 }
 
 export class ServerViews {
@@ -83,6 +83,7 @@ export class DetailsModel {
   ProductionYear: number = 0
   ChildCount: number = 1
   UserData: Array<UserData> = []
+  People:Array<ActorInformation> = []
 }
 
 export class SeasonListModel {
@@ -157,6 +158,7 @@ export class MediaStreams {
   SampleRate: number = 0
   SubtitleLocationType: string = ''
   DeliveryMethod: string = ''
+  IsDefault: boolean = true
 }
 
 export class UserInfo {
@@ -166,10 +168,21 @@ export class UserInfo {
   serverId: string = ''
   servername: string = ''
   userId: string = ''
+  address: string = ''
+  http: string = 'https'
+  port: string = ''
 }
 
 export class SystemInfo {
   ServerName: string = ''
   Version: string = ''
   Id: string = ''
+}
+
+export class ActorInformation {
+  Name?: string
+  Id?: string
+  Role?: string
+  Type?: string
+  PrimaryImageTag?: string
 }

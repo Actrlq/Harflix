@@ -1,5 +1,5 @@
 import { AppUtil } from "@pura/harmony-utils"
-import { BasicConstants } from "../viewmodel/BasicConstants"
+import { BasicConstants } from "../../viewmodel/BasicConstants"
 import { common } from "@kit.AbilityKit"
 import { BusinessError } from '@kit.BasicServicesKit'
 

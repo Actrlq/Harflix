@@ -22,7 +22,7 @@ export struct SetUp {
       .alignItems(VerticalAlign.Center)
       .onClick(()=>{
         router.pushUrl({
-          url:"pages/Aboutapp"
+          url:"pages/set/Aboutapp"
         }).catch(() => {
         })
       })

@@ -1,7 +1,7 @@
 import { BasicConstants } from "../viewmodel/BasicConstants"
 import { MediaQueryUtil } from '../utils/MediaQueryUtil'
 import { router } from '@kit.ArkUI'
-import { DialogAction, DialogUtil, KvUtil } from "@pura/harmony-utils"
+import { DialogAction, DialogUtil, KvUtil, PreferencesUtil } from "@pura/harmony-utils"
 import { distributedKVStore } from "@kit.ArkData"
 import { UserInfo } from "../viewmodel/DataConstraints"
 
@@ -11,10 +11,11 @@ export struct EmbyList {
   @StorageProp('MediaQueryText') MediaQueryText: string = 'sm'
   @State embyList: UserInfo[] = []
   //弹窗状态
-  @State isShow: number = -1
   @State firstLoad: string = ''
+  @State showUsername: string = '不显示用户名'
 
   aboutToAppear(): void {
+    this.showUsername = PreferencesUtil.getStringSync('showUsername')
     this.MediaInformation.register()
     this.fetchKeydata()
   }
@@ -34,41 +35,45 @@ export struct EmbyList {
 
   // 弹框内容
   @Builder
-  dialogBuilder(kv: string) {
-    Column() {
-      Column() {
-        Text('删除')
-          .fontSize(BasicConstants.FONT_NORMAL)
-      }
-      .width('80%')
-      .padding(10)
-      .onClick(() => {
-        this.isShow = -1
-        DialogUtil.showPrimaryDialog({
-          title: '删除',
-          message: '确认删除吗！！！',
-          primaryButton: "取消",
-          secondaryButton: "确认",
-          onAction: (action) => {
-            if (action == DialogAction.TWO) {
-              KvUtil.delete(kv)
-              this.embyList = []
-              const keyPrefix = "emby"
-              KvUtil.getEntries(keyPrefix).then((res) => {
-                if (res) {
-                  this.firstLoad = res[0].key
-                  KvUtil.put('FirstLoad', this.firstLoad)
-                  this.fetchKeydata()
-                }
-              }).catch(()=>{
-                KvUtil.delete('FirstLoad')
-              })
+  editMenu(kv: string) {
+    Menu() {
+      MenuItem({
+        content: '删除'
+      })
+        .onClick(() => {
+          DialogUtil.showPrimaryDialog({
+            title: '删除',
+            message: '确认删除吗！！！',
+            primaryButton: "取消",
+            secondaryButton: "确认",
+            onAction: (action) => {
+              if (action == DialogAction.TWO) {
+                KvUtil.delete(kv)
+                this.embyList = []
+                const keyPrefix = "emby"
+                KvUtil.getEntries(keyPrefix).then((res) => {
+                  if (res) {
+                    this.firstLoad = res[0].key
+                    KvUtil.put('FirstLoad', this.firstLoad)
+                    this.fetchKeydata()
+                  }
+                })
+              }
             }
+          })
+        })
+
+      MenuItem({ content: this.showUsername })
+        .onClick(() => {
+          if (this.showUsername === '显示用户名') {
+            this.showUsername = '不显示用户名'
+            PreferencesUtil.putSync('showUsername','不显示用户名')
+          } else {
+            this.showUsername = '显示用户名'
+            PreferencesUtil.putSync('showUsername','显示用户名')
           }
         })
-      })
     }
-    .padding(10)
   }
 
   build() {
@@ -85,7 +90,7 @@ export struct EmbyList {
           .onClick(() => {
             router.pushUrl({
               url: 'pages/AddEmby',
-              params:{servername:'',serverUrl:'',username:''}
+              params: { servername: '', serverUrl: '', username: '' }
             }).catch()
           })
       }
@@ -97,7 +102,7 @@ export struct EmbyList {
       //服务器列表
       Scroll() {
         Column() {
-          ForEach(this.embyList, (item: UserInfo, index: number) => {
+          ForEach(this.embyList, (item: UserInfo) => {
             Column() {
               Row() {
                 Column() {
@@ -108,14 +113,28 @@ export struct EmbyList {
 
                 Column() {
                   Text(item.servername ? item.servername : '无名称')
-                    .fontSize(20)
-                    .height("100%")
+                    .fontSize(BasicConstants.FONT_BIG)
+                    .margin({ top: 5, bottom: 5 })
+                  Text(item.username)
+                    .fontSize(BasicConstants.FONT_SMALL)
+                    .borderWidth(1)
+                    .borderRadius(5)
+                    .padding(2)
+                    .visibility(this.showUsername === '不显示用户名' ? Visibility.Visible : Visibility.None)
                 }
                 .width("60%")
-                .onClick(()=>{
+                .alignItems(HorizontalAlign.Start)
+                .onClick(() => {
                   router.pushUrl({
                     url: 'pages/AddEmby',
-                    params:{servername:item.servername,serverUrl:item.serverUrl,username:item.username}
+                    params: {
+                      servername: item.servername,
+                      serverUrl: item.serverUrl,
+                      username: item.username,
+                      address: item.address,
+                      http: item.http,
+                      port: item.port,
+                    }
                   }).catch()
                 })
 
@@ -124,29 +143,16 @@ export struct EmbyList {
                     .fontSize(BasicConstants.FONT_BIG)
                 }
                 .width("20%")
-                .onClick(() => {
-                  this.isShow = index
-                })
-                .bindPopup(this.isShow === index ? true : false, {
-                  builder: this.dialogBuilder('emby_' + item.userId),
-                  width: 100,
-                  enableArrow: false,
-                  placement: Placement.BottomLeft,
-                  radius: 10,
-                  onStateChange: (e) => {
-                    if (!e.isVisible) {
-                      this.isShow = -1
-                    }
-                  }
-                })
+                .bindMenu(this.editMenu('emby_' + item.userId))
               }
               .width("100%")
             }
             .width(this.MediaQueryText == 'sm' ? '100%' : '60%')
-            .height(50)
+            .height(60)
             .backgroundColor(Color.White)
             .borderRadius(10)
             .margin({ bottom: 5 })
+            .justifyContent(FlexAlign.Center)
           }, (item: UserInfo) => item.token)
         }
         .width("100%")

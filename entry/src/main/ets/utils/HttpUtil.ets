@@ -7,7 +7,7 @@ import { UserInfo } from "../viewmodel/DataConstraints";
 const getToken = async () => {
   const key = await KvUtil.get('FirstLoad') as string
   const res = await KvUtil.get(key)
-  const UserInfo:UserInfo = JSON.parse(res as string)
+  const UserInfo: UserInfo = JSON.parse(res as string)
   return UserInfo.token
 }
 
@@ -56,7 +56,7 @@ export function AuthenticateHttp<T, K>(url: string, requestData: K) {
 }
 
 //GET请求
-export async function MyRequestHttp<T>(name:string,url: string) {
+export async function MyRequestHttp<T>(name: string, url: string) {
 
   const httpRequest = http.createHttp()
   let token = await getToken()
@@ -100,7 +100,7 @@ export async function MyRequestHttp<T>(name:string,url: string) {
 }
 
 //POST请求
-export async function MyPostHttp<T, K>(name:string,url: string, requestData?: K) {
+export async function MyPostHttp<T, K>(name: string, url: string, requestData?: K) {
 
   const httpRequest = http.createHttp()
   let token = await getToken()
@@ -129,12 +129,13 @@ export async function MyPostHttp<T, K>(name:string,url: string, requestData?: K)
         if (data.result) {
           resolve(JSON.parse(data.result as string))
         }
+
         httpRequest.destroy()
       } else {
         console.error(`${name}请求错误信息:` + JSON.stringify(err));
         try {
           promptAction.showToast({ message: `${data.responseCode}：${data.result}` })
-        } catch (error) {
+        } catch (eer) {
 
         }
         // reject(JSON.stringify(err))
@@ -148,7 +149,7 @@ export async function MyPostHttp<T, K>(name:string,url: string, requestData?: K)
 }
 
 //GET请求
-export async function StringHttp(name:string,url: string) {
+export async function StringHttp(name: string, url: string) {
 
   const httpRequest = http.createHttp()
   let token = await getToken()

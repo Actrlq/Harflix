@@ -1,12 +1,19 @@
 import { FetchDetailsApi, FetchPlaybackInfoApi, FetchUnWatchedApi } from '../apis/ProductApi'
 import { BasicConstants } from '../viewmodel/BasicConstants'
-import { DetailsModel, MediaSources, NewViewsList, PlaybackInfo, ViewingRecord } from '../viewmodel/DataConstraints'
+import {
+  ActorInformation,
+  DetailsModel,
+  MediaSources,
+  NewViewsList,
+  PlaybackInfo,
+  ViewingRecord
+} from '../viewmodel/DataConstraints'
 import { VideoDialog } from '../utils/VideoDialog'
 import router from '@ohos.router'
 import { NetworkUtil, ToastUtil, DialogUtil } from '@pura/harmony-utils'
 import { FetchImagePrimary, FetchServerUrl, FetchSubtitleApi } from '../apis/AuxiliaryApi'
 import { SubtitleItem, SubtitleProcessor } from '../utils/SubtitleProcessor'
-import { InfoFilter, SubtitleList, VideoInfo } from '../utils/InfoFilter'
+import { AudioList, InfoFilter, SubtitleList, VideoInfo } from '../utils/InfoFilter'
 import { SeasonList } from '../view/SeasonList'
 
 @Entry
@@ -21,19 +28,27 @@ struct Details {
   private subtitleProcessor: SubtitleProcessor = new SubtitleProcessor()
   private InfoFilter: InfoFilter = new InfoFilter()
   @State subtitles: SubtitleItem[] = []
-  @State subtitleList: SubtitleList[] = []
+  private subtitleList: SubtitleList[] = []
+  private audioList: AudioList[] = []
   //首选字幕
   @State preferredSubtitle: string = ''
+  //首选音频
+  @State preferredAudio: string = ''
+  @State videoRange: string = ''
   //播放视频id
   @State mediaSourceId: string = ''
   //字幕index
   @State @Watch('onSubtitlesIdChanged') subtitlesId: number = 0
+  //音频index
+  private audioId: number = 1
   @State subtitlesCodec: string = ''
   //视频信息
   @State videoInfo: VideoInfo[] = []
   @State serverUrl: string = ''
   private playSessionId: string = ''
-  @State bgColor: string = '#f7f8fa'
+  private subtitleSelect: number | number[] = 0
+  private audioSelect: number | number[] = 0
+  @State actorInformation: ActorInformation[] = []
   //弹窗组件
   dialogController: CustomDialogController | null = new CustomDialogController({
     builder: VideoDialog({ videoIndex: $videoIndex, data: this.data, videoInfo: this.videoInfo }),
@@ -67,6 +82,7 @@ struct Details {
   fetchDetails = async () => {
     const res = await FetchDetailsApi<DetailsModel>(this.Id.Id)
     this.PageData = [res]
+    this.actorInformation = this.PageData[0].People as ActorInformation[]
   }
   fetchPlaybackInfo = async () => {
     if (!this.videoId) {
@@ -77,19 +93,30 @@ struct Details {
     this.playSessionId = res.PlaySessionId
     this.subtitleList = this.InfoFilter.filterSubtitle(this.data[this.videoIndex].MediaStreams)
     this.videoInfo = this.InfoFilter.filterVideoInfo(this.data[this.videoIndex].MediaStreams)
+    this.audioList = this.InfoFilter.filterAudio(this.data[this.videoIndex].MediaStreams)
     this.mediaSourceId = this.data[this.videoIndex].Id
+    this.videoRange = this.videoInfo[this.videoIndex].displayTitle
     for (const text of this.subtitleList) {
       if (text.displayLanguage === 'Chinese Simplified') {
         this.preferredSubtitle = text.displayLanguage
         this.subtitlesCodec = text.codec
         this.subtitlesId = text.index
         break
+      } else {
+        this.preferredSubtitle = this.subtitleList[0].displayLanguage
+        this.subtitlesCodec = this.subtitleList[0].codec
+        this.subtitlesId = this.subtitleList[0].index
       }
     }
-    if (this.subtitlesId === 0) {
-      this.preferredSubtitle = this.subtitleList[0].displayLanguage
-      this.subtitlesCodec = this.subtitleList[0].codec
-      this.subtitlesId = this.subtitleList[0].index
+    for (const text of this.audioList) {
+      if (text.isDefault) {
+        this.preferredAudio = text.displayTitle
+        this.audioId = text.index
+        break
+      } else {
+        this.preferredAudio = this.audioList[0].displayTitle
+        this.audioId = this.audioList[0].index
+      }
     }
   }
   fetchUnWatched = async () => {
@@ -156,35 +183,83 @@ struct Details {
           .height(50)
           .margin({ top: 5, bottom: 5 })
 
+          //视频
+          Row() {
+            Column() {
+              Text(`视频：`)
+                .fontSize(BasicConstants.FONT_NORMAL)
+            }
+
+            Column() {
+              Text(this.videoRange ? this.videoRange : '无视频信息')
+                .fontSize(BasicConstants.FONT_NORMAL)
+            }
+            .border({ width: 1 })
+            .padding(5)
+            .borderRadius(5)
+          }
+          .margin({ bottom: 10 })
+
+          //音频
+          Row() {
+            Column() {
+              Text(`音频：`)
+                .fontSize(BasicConstants.FONT_NORMAL)
+            }
+
+            Column() {
+              Text(this.preferredAudio ? this.preferredAudio : '默认(无可选音频)')
+                .fontSize(BasicConstants.FONT_NORMAL)
+            }
+            .border({ width: 1 })
+            .onClick(() => {
+              if (this.audioList.length > 1) {
+                DialogUtil.showTextPicker({
+                  range: this.audioList.map((item: AudioList) => item.displayTitle),
+                  canLoop: false,
+                  selected: this.audioSelect,
+                  onAccept: (result) => {
+                    this.audioSelect = result.index
+                    this.preferredAudio = this.audioList[result.index as number].displayTitle
+                    this.audioId = this.audioList[result.index as number].index
+                  }
+                })
+              }
+            })
+            .padding(5)
+            .borderRadius(5)
+          }
+          .margin({ bottom: 10 })
+
           //字幕
           Row() {
-            if (this.preferredSubtitle) {
-              Column() {
-                Text(`字幕：`)
-                  .fontSize(BasicConstants.FONT_NORMAL)
-              }
-
-              Column() {
-                Text(this.preferredSubtitle)
-                  .fontSize(BasicConstants.FONT_NORMAL)
-              }
-              .border({ width: 1 })
-              .onClick(() => {
-                if (this.subtitleList.length > 1) {
-                  DialogUtil.showTextPicker({
-                    range: this.subtitleList.map((item: SubtitleList) => item.displayLanguage),
-                    canLoop: false,
-                    onAccept: (result) => {
-                      this.subtitlesCodec = this.subtitleList[result.index as number].codec
-                      this.subtitlesId = this.subtitleList[result.index as number].index
-                      this.preferredSubtitle = this.subtitleList[result.index as number].displayLanguage
-                    }
-                  })
-                }
-              })
-              .padding(5)
-              .borderRadius(5)
+            Column() {
+              Text(`字幕：`)
+                .fontSize(BasicConstants.FONT_NORMAL)
             }
+
+            Column() {
+              Text(this.preferredSubtitle ? this.preferredSubtitle : '默认(无可选字幕)')
+                .fontSize(BasicConstants.FONT_NORMAL)
+            }
+            .border({ width: 1 })
+            .onClick(() => {
+              if (this.subtitleList.length > 1) {
+                DialogUtil.showTextPicker({
+                  range: this.subtitleList.map((item: SubtitleList) => item.displayLanguage),
+                  canLoop: false,
+                  selected: this.subtitleSelect,
+                  onAccept: (result) => {
+                    this.subtitleSelect = result.index
+                    this.preferredSubtitle = this.subtitleList[result.index as number].displayLanguage
+                    this.subtitlesCodec = this.subtitleList[result.index as number].codec
+                    this.subtitlesId = this.subtitleList[result.index as number].index
+                  }
+                })
+              }
+            })
+            .padding(5)
+            .borderRadius(5)
           }
 
           //版本选择
@@ -222,7 +297,9 @@ struct Details {
                       mediaSourceId: this.mediaSourceId,
                       playSessionId: this.playSessionId,
                       subtitleList: this.subtitleList,
-                      subtitles: this.subtitles
+                      subtitles: this.subtitles,
+                      audioList: this.audioList,
+                      audioId: this.audioId
                     }
                   }).catch(() => {
                   })
@@ -236,7 +313,9 @@ struct Details {
                       mediaSourceId: this.mediaSourceId,
                       playSessionId: this.playSessionId,
                       subtitleList: this.subtitleList,
-                      subtitles: this.subtitles
+                      subtitles: this.subtitles,
+                      audioList: this.audioList,
+                      audioId: this.audioId
                     }
                   }).catch(() => {
                   })
@@ -262,12 +341,63 @@ struct Details {
           }
           .width('100%')
           .margin({ top: 10, bottom: 10 })
+
+          //演员
+          Column() {
+            Text('演员')
+              .width('100%')
+              .fontSize(BasicConstants.FONT_BIG)
+              .fontWeight(FontWeight.Bold)
+              .margin({ top: 10, bottom: 10 })
+
+            List({ space: 5 }) {
+              ForEach(this.actorInformation, (item: ActorInformation) => {
+                ListItem() {
+                  Flex({ direction: FlexDirection.Column }) {
+                    Column() {
+                      Image(this.serverUrl + FetchImagePrimary(item.Id) + '?maxWidth=400')
+                        .alt($r('app.media.Image_loading_failed'))
+                    }
+                    .width('100%')
+                    .borderRadius(10)
+                    .clip(true)
+
+                    Column() {
+                      Text(item.Name)
+                        .fontSize(BasicConstants.FONT_SMALL)
+                        .maxLines(1)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    }
+                    .margin({ top: 5, bottom: 5 })
+
+                    Column() {
+                      Text(item.Role)
+                        .fontSize(BasicConstants.FONT_MIN_SMALL)
+                        .maxLines(1)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    }
+                    .padding({bottom:5})
+
+                  }
+                  .width(100)
+                }
+              })
+            }
+            .width('100%')
+            .height('100%')
+            .listDirection(Axis.Horizontal)
+            .scrollBar(BarState.Off)
+          }
+          .height(180)
+          .width('100%')
+
         }
         .width('90%')
         .alignSelf(ItemAlign.Center)
       }
       .width('100%')
       .backgroundColor($r('app.color.theme_background_1'))
+      .padding({ bottom: 60 })
     }
     .scrollBar(BarState.Off)
   }

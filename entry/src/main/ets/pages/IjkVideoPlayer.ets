@@ -11,10 +11,10 @@ import { LogUtils } from '@ohos/ijkplayer';
 import { IjkplayerMapManager } from '../viewmodel/IjkplayerMapManager';
 import { router } from '@kit.ArkUI';
 import window from '@ohos.window';
-import { DialogUtil, ObjectUtil, ToastUtil, WindowUtil } from '@pura/harmony-utils';
+import { DialogUtil, NetworkUtil, ObjectUtil, ToastUtil, WindowUtil } from '@pura/harmony-utils';
 import { BasicConstants } from '../viewmodel/BasicConstants'
 import { SubtitleItem, SubtitleProcessor } from '../utils/SubtitleProcessor';
-import { SubtitleList } from '../utils/InfoFilter';
+import { AudioList, SubtitleList } from '../utils/InfoFilter';
 import { FetchSubtitleApi } from '../apis/AuxiliaryApi';
 import { FetchDetailsApi, ReturnProgressApi } from '../apis/ProductApi';
 import { DetailsModel } from '../viewmodel/DataConstraints';
@@ -34,6 +34,8 @@ class videoUrlModel {
   playSessionId: string = ''
   subtitleList: SubtitleList[] = []
   subtitles: SubtitleItem[] = []
+  audioList: AudioList[] = []
+  audioId: number = 1
 }
 
 @Entry
@@ -74,7 +76,7 @@ struct IjkVideoPlayer {
   @State TapScreen: boolean = false
   private TapScreenTime:number = -1
   //播放状态
-  @State isPlayer: boolean = true
+  @State isPlayer: boolean = false
   //当前显示字幕
   @State CurrentSubtitle: string = ''
   private subtitleList: SubtitleList[] = this.videoData.subtitleList
@@ -84,6 +86,11 @@ struct IjkVideoPlayer {
   private subtitleProcessor: SubtitleProcessor = new SubtitleProcessor()
   @State @Watch('onSubtitle') subtitles: SubtitleItem[] = this.videoData.subtitles
   private playbackPositionTicks: number = 0
+  private subtitleSelect: number | number[] = 0
+  private audioSelect: number | number[] = 0
+  private audioList: AudioList[] = this.videoData.audioList
+  //音频index
+  @State @Watch('onAudio') audioId: number = this.videoData.audioId
 
   aboutToAppear() {
     this.xcomponentId = "xcomponentId_" + IjkplayerMapManager.generateId();
@@ -145,13 +152,23 @@ struct IjkVideoPlayer {
     }
   }
 
+  onSubtitlesIdChanged() {
+    this.fetchSubtitle()
+  }
+
+  onAudio(){
+    this.mIjkMediaPlayer.selectTrack(this.audioId.toString())
+  }
+
   fetchSubtitle = async () => {
-    this.subtitles = []
     const res = await FetchSubtitleApi(this.videoData.videoId, this.videoData.mediaSourceId, this.subtitlesId,
       this.subtitlesCodec)
     this.subtitles = this.subtitleProcessor.parse(res, this.subtitlesCodec)
   }
   returnProgress = async () => {
+    if (NetworkUtil.isNetworkAvailable() === false) {
+      return
+    }
     const time = this.mIjkMediaPlayer.getCurrentPosition() - 60000
     await ReturnProgressApi<null>({
       PositionTicks: time * 10000,
@@ -166,10 +183,6 @@ struct IjkVideoPlayer {
     this.playbackPositionTicks = ObjectUtil.getValue<number>(res.UserData, 'PlaybackPositionTicks') / 10000
   }
   xcomponentController: XComponentController = new XComponentController()
-
-  onSubtitlesIdChanged() {
-    this.fetchSubtitle()
-  }
 
   build() {
     Flex({ direction: FlexDirection.Column }) {
@@ -191,7 +204,8 @@ struct IjkVideoPlayer {
             .width('100%')
             .id(this.xcomponentId)
         }
-        .height('100%')
+        .width('100%')
+        .aspectRatio(this.videoAspectRatio)
 
         //字幕
         if (this.subtitles.length > 0) {
@@ -262,9 +276,9 @@ struct IjkVideoPlayer {
                 style: SliderStyle.OutSet
               })
                 .layoutWeight(1)
-                .blockColor(Color.Blue)
+                .blockColor(Color.White)
                 .trackColor(Color.Gray)
-                .selectedColor(Color.Blue)
+                .selectedColor(Color.White)
                 .enabled(this.slideEnable)
                 .onChange((value: number, mode: SliderChangeMode) => {
                   if (mode === SliderChangeMode.End) {
@@ -287,7 +301,7 @@ struct IjkVideoPlayer {
               Row() {
                 Image(this.isPlayer ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
                   .height('60%')
-                  .margin({ right: 10 })
+                  .margin({ right: 20 })
                   .onClick(() => {
                     if (this.isPlayer) {
                       this.isPlayer = false
@@ -306,8 +320,25 @@ struct IjkVideoPlayer {
               Row() {
                 Text('音频')
                   .fontColor(Color.White)
-                  .margin({ right: 10 })
+                  .margin({ right: 20 })
                   .fontSize(BasicConstants.FONT_NORMAL)
+                  .onClick(()=>{
+                    if (this.audioList.length > 1) {
+                      DialogUtil.showTextPicker({
+                        range: this.audioList.map((item: AudioList) => item.displayLanguage),
+                        canLoop: false,
+                        alignment: DialogAlignment.CenterEnd,
+                        selected: this.audioSelect,
+                        onAccept: (result) => {
+                          this.audioSelect = result.index
+                          this.audioId = this.audioList[result.index as number].index
+                        }
+                      })
+                    }else {
+                      ToastUtil.showToast('没有可选音频')
+                    }
+                  })
+
                 Text('字幕')
                   .fontColor(Color.White)
                   .fontSize(BasicConstants.FONT_NORMAL)
@@ -316,11 +347,16 @@ struct IjkVideoPlayer {
                       DialogUtil.showTextPicker({
                         range: this.subtitleList.map((item: SubtitleList) => item.displayLanguage),
                         canLoop: false,
+                        alignment: DialogAlignment.CenterEnd,
+                        selected: this.subtitleSelect,
                         onAccept: (result) => {
+                          this.subtitleSelect = result.index
                           this.subtitlesCodec = this.subtitleList[result.index as number].codec
                           this.subtitlesId = this.subtitleList[result.index as number].index
                         }
                       })
+                    }else {
+                      ToastUtil.showToast('没有可选字幕')
                     }
                   })
               }
@@ -338,6 +374,7 @@ struct IjkVideoPlayer {
         }
         .height('100%')
         .backgroundColor(Color.Transparent)
+        .padding(10)
 
         Image($r('app.media.icon_replay'))
           .objectFit(ImageFit.Auto)
@@ -628,13 +665,16 @@ struct IjkVideoPlayer {
     this.mIjkMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
     let mOnPreparedListener: OnPreparedListener = {
       onPrepared: () => {
-        this.isSeekTo = true
-        this.mDestroyPage = false
-        this.seekTo(this.playbackPositionTicks + "")
-        this.setProgress()
-        this.isSeekTo = false
+        if (this.playbackPositionTicks > 0) {
+          this.isSeekTo = true
+          this.mDestroyPage = false
+          this.seekTo(this.playbackPositionTicks + "")
+          this.setProgress()
+          this.isSeekTo = false
+        }
         this.onSubtitle()
         this.updateProgress()
+        this.isPlayer = true
       }
     }
     this.mIjkMediaPlayer.setOnPreparedListener(mOnPreparedListener);

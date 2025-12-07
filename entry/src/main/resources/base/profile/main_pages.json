@@ -6,6 +6,6 @@
     "pages/Details",
     "pages/IjkVideoPlayer",
     "pages/SearchPage",
-    "pages/Aboutapp"
+    "pages/set/Aboutapp"
   ]
 }
