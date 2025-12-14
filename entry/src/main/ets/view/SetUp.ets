@@ -8,21 +8,19 @@ export struct SetUp {
       Row() {
         Text('关于')
           .fontSize(BasicConstants.FONT_NORMAL)
-          .padding({ left: 20 })
-        Image($r('app.media.fanhuijiantou'))
-          .height('60%')
-          .rotate({ angle: 180 })
-          .margin({ right: 20 })
+          .padding({ left: 10 })
+
+        SymbolGlyph($r('sys.symbol.chevron_right'))
+          .fontSize($r('sys.float.Title_L'))
+          .fontColor([$r('sys.color.icon_fourth')])
+          .margin({ right: 10 })
       }
-      .width('100%')
-      .height(50)
-      .backgroundColor(Color.White)
-      .borderRadius(10)
       .justifyContent(FlexAlign.SpaceBetween)
       .alignItems(VerticalAlign.Center)
-      .onClick(()=>{
+      .long_list()
+      .onClick(() => {
         router.pushUrl({
-          url:"pages/set/Aboutapp"
+          url: "pages/set/Aboutapp"
         }).catch(() => {
         })
       })
@@ -32,4 +30,19 @@ export struct SetUp {
     .height('100%')
     .padding({ top: 50 })
   }
+
+  @Styles
+  long_list(){
+    .width('100%')
+    .height(60)
+    .backgroundColor($r('sys.color.comp_background_list_card'))
+    .borderRadius($r('sys.float.corner_radius_level8'))
+    .padding(10)
+    .stateStyles({
+      pressed:{.backgroundColor($r('sys.color.titlebar_icon_background_pressed_color'))}
+    })
+  }
+
 }
+
+

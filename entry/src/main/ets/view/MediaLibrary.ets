@@ -1,11 +1,12 @@
 import { BasicConstants } from "../viewmodel/BasicConstants"
 import { ServerViews, SVItems, NewViewsList, VRItems, ViewingRecord } from "../viewmodel/DataConstraints"
 import { FetchNewViewsListApi, FetchServerViewsApi, FetchViewingRecordApi } from "../apis/ProductApi"
-import { router } from "@kit.ArkUI"
+import { LengthMetrics, router } from "@kit.ArkUI"
 import { KvUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils"
 import { FetchImageBackdrop, FetchImagePrimary, FetchServerUrl } from "../apis/AuxiliaryApi"
 import { distributedKVStore } from "@kit.ArkData"
 import { UserInfo } from "../viewmodel/DataConstraints"
+import { LoadingView } from "../common/LoadingView"
 
 @Component
 export struct MediaLibrary {
@@ -16,7 +17,7 @@ export struct MediaLibrary {
   @State serverUrl: string = ''
   //数据库监听
   private callBack: Callback<distributedKVStore.ChangeNotification> = (key) => {
-    if (key.updateEntries[0]?.key === 'FirstLoad') {
+    if (key.deleteEntries.length > 0) {
       this.fetchServerViews().then(() => {
         this.AddonData()
       })
@@ -26,10 +27,10 @@ export struct MediaLibrary {
       this.fetchKeydata()
     }
   }
-  private embyList: UserInfo[] = []
-  //弹窗状态
-  @State isShow: boolean = false
+  @State embyList: UserInfo[] = []
   @State servername: string = ''
+  @State token: string = ''
+  @State isLoading: boolean = true
 
   @Builder
   ListUtils(name: string, index: number, id: string) {
@@ -96,32 +97,35 @@ export struct MediaLibrary {
   }
 
   @Builder
-  dialogBuilder() {
-    Column() {
+  serverMenu() {
+    Menu() {
       ForEach(this.embyList, (item: UserInfo) => {
-        Column() {
-          Text(item.servername ? item.servername : '无名称')
-            .fontSize(BasicConstants.FONT_NORMAL)
-        }
-        .width('90%')
-        .margin(5)
-        .onClick(()=>{
-          KvUtil.put('FirstLoad','emby_' + item.userId).then(()=>{
-            this.fetchServerViews().then(() => {
-              this.AddonData()
+        MenuItem({
+          content: item.servername ? item.servername : '无名称'
+        }).selectIcon(true)
+          .selected(this.token == item.token)
+          .onClick(() => {
+            KvUtil.put('FirstLoad', 'emby_' + item.userId).then(() => {
+              this.fetchServerViews().then(() => {
+                this.AddonData()
+              })
+              this.fetchViewingRecord()
+              this.fetchServerUrl()
+              this.getServername()
             })
-            this.fetchViewingRecord()
-            this.fetchServerUrl()
-            this.getServername()
-            this.isShow = false
           })
-        })
-      }, (item: UserInfo) => item.token)
+      })
     }
-    .padding(5)
+    .menuItemDivider({
+      strokeWidth: LengthMetrics.vp(1.5),
+      color: '#d5d5d5',
+    })
   }
 
   aboutToAppear(): void {
+    setTimeout(() => {
+      this.isLoading = false
+    }, 30000)
     if (NetworkUtil.isNetworkAvailable()) {
       this.fetchServerViews().then(() => {
         this.AddonData()
@@ -156,6 +160,9 @@ export struct MediaLibrary {
     for (const item of this.ListId) {
       await this.fetchNewViewsList(item)
     }
+    setTimeout(() => {
+      this.isLoading = false
+    }, 1000)
   }
   fetchViewingRecord = async () => {
     this.WatchList = []
@@ -181,82 +188,70 @@ export struct MediaLibrary {
     const res = await KvUtil.get(key)
     const UserInfo: UserInfo = JSON.parse(res as string)
     this.servername = UserInfo.servername
+    this.token = UserInfo.token
   }
 
   build() {
 
-    Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center }) {
-      Scroll() {
-        Column() {
-          //顶部状态栏
-          Row() {
-            Column() {
-              Image($r('app.media.emby'))
-                .height('80%')
-            }
-            .width('25%')
-            .alignItems(HorizontalAlign.Start)
-            .onClick(() => {
-              this.isShow = true
-            })
-            .bindPopup(this.isShow, {
-              builder: this.dialogBuilder(),
-              width: 150,
-              enableArrow: false,
-              placement: Placement.BottomLeft,
-              radius: 10,
-              onStateChange: (e) => {
-                if (!e.isVisible) {
-                  this.isShow = false
-                }
-              }
-            })
-
-            Column() {
-              Text(this.servername ? this.servername : 'Harflix')
-                .fontSize(BasicConstants.FONT_NORMAL)
-                .fontSize(BasicConstants.FONT_BIG)
-            }
-            .width('50%')
-            .justifyContent(FlexAlign.Center)
-
-            Column() {
-              Image($r('app.media.sousuo'))
-                .height('60%')
-            }
-            .width('15%')
-            .onClick(() => {
-              router.pushUrl({
-                url: 'pages/SearchPage'
-              }).catch(() => {
-              })
-            })
-
-            Column() {
-              Image($r('app.media.shuaxin'))
-                .height('50%')
-            }
-            .width('10%')
-            .onClick(async () => {
-              if (NetworkUtil.isNetworkAvailable()) {
-                this.fetchServerViews().then(() => {
-                  this.AddonData()
-                })
-                this.fetchViewingRecord()
-                this.fetchServerUrl()
-                this.getServername()
-                this.fetchKeydata()
-              } else {
-                ToastUtil.showToast('网络不可用')
-              }
-            })
-
+    Scroll() {
+      Column() {
+        //顶部状态栏
+        Row() {
+          Column() {
+            Image($r('app.media.emby'))
+              .height('80%')
           }
-          .width('100%')
-          .height(50)
-          .padding({ left: 10, right: 10 })
-          .margin({ top: 40 })
+          .width('25%')
+          .alignItems(HorizontalAlign.Start)
+          .bindMenu(this.serverMenu())
 
+          Column() {
+            Text(this.servername ? this.servername : 'Harflix')
+              .fontSize(BasicConstants.FONT_NORMAL)
+              .fontSize(BasicConstants.FONT_BIG)
+          }
+          .width('50%')
+          .justifyContent(FlexAlign.Center)
+
+          Column() {
+            Image($r('app.media.sousuo'))
+              .height('60%')
+          }
+          .width('15%')
+          .onClick(() => {
+            router.pushUrl({
+              url: 'pages/SearchPage'
+            }).catch(() => {
+            })
+          })
+
+          Column() {
+            Image($r('app.media.shuaxin'))
+              .height('50%')
+          }
+          .width('10%')
+          .onClick(async () => {
+            this.isLoading = true
+            if (NetworkUtil.isNetworkAvailable()) {
+              this.fetchServerViews().then(() => {
+                this.AddonData()
+              })
+              this.fetchViewingRecord()
+              this.fetchServerUrl()
+              this.getServername()
+              this.fetchKeydata()
+            } else {
+              ToastUtil.showToast('网络不可用')
+            }
+          })
+
+        }
+        .width('100%')
+        .height(50)
+        .padding({ left: 10, right: 10 })
+        .margin({ top: 40 })
+
+        Stack() {
           //主页内容
           Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center }) {
 
@@ -346,6 +341,7 @@ export struct MediaLibrary {
                 }
                 .width('100%')
                 .height('100%')
+                .margin({ top: 10 })
                 .listDirection(Axis.Horizontal)
                 .scrollBar(BarState.Off)
               }
@@ -371,13 +367,15 @@ export struct MediaLibrary {
 
           }
           .width('100%')
-        }
-      }
-      .scrollBar(BarState.Off)
 
+          if (this.isLoading) {
+            LoadingView()
+          }
+        }
+
+      }
     }
-    .width('100%')
-    .height('100%')
+    .scrollBar(BarState.Off)
 
   }
 }

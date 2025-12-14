@@ -9,9 +9,9 @@ import { OnInfoListener } from '@ohos/ijkplayer';
 import { OnSeekCompleteListener } from '@ohos/ijkplayer';
 import { LogUtils } from '@ohos/ijkplayer';
 import { IjkplayerMapManager } from '../viewmodel/IjkplayerMapManager';
-import { router } from '@kit.ArkUI';
+import { LengthMetrics, router } from '@kit.ArkUI';
 import window from '@ohos.window';
-import { DialogUtil, NetworkUtil, ObjectUtil, ToastUtil, WindowUtil } from '@pura/harmony-utils';
+import { NetworkUtil, ObjectUtil, WindowUtil } from '@pura/harmony-utils';
 import { BasicConstants } from '../viewmodel/BasicConstants'
 import { SubtitleItem, SubtitleProcessor } from '../utils/SubtitleProcessor';
 import { AudioList, SubtitleList } from '../utils/InfoFilter';
@@ -36,6 +36,7 @@ class videoUrlModel {
   subtitles: SubtitleItem[] = []
   audioList: AudioList[] = []
   audioId: number = 1
+  subtitlesId: number = 3
 }
 
 @Entry
@@ -74,7 +75,7 @@ struct IjkVideoPlayer {
   private updateSubtitleTimer: number = -1
   //是否点击屏幕
   @State TapScreen: boolean = false
-  private TapScreenTime:number = -1
+  private TapScreenTime: number = -1
   //播放状态
   @State isPlayer: boolean = false
   //当前显示字幕
@@ -82,13 +83,10 @@ struct IjkVideoPlayer {
   private subtitleList: SubtitleList[] = this.videoData.subtitleList
   @State subtitlesCodec: string = ''
   //字幕index
-  @State @Watch('onSubtitlesIdChanged') subtitlesId: number = 0
+  @State @Watch('onSubtitlesIdChanged') subtitlesId: number = this.videoData.subtitlesId
   private subtitleProcessor: SubtitleProcessor = new SubtitleProcessor()
   @State @Watch('onSubtitle') subtitles: SubtitleItem[] = this.videoData.subtitles
   private playbackPositionTicks: number = 0
-  private subtitleSelect: number | number[] = 0
-  private audioSelect: number | number[] = 0
-  private audioList: AudioList[] = this.videoData.audioList
   //音频index
   @State @Watch('onAudio') audioId: number = this.videoData.audioId
 
@@ -156,7 +154,7 @@ struct IjkVideoPlayer {
     this.fetchSubtitle()
   }
 
-  onAudio(){
+  onAudio() {
     this.mIjkMediaPlayer.selectTrack(this.audioId.toString())
   }
 
@@ -183,6 +181,127 @@ struct IjkVideoPlayer {
     this.playbackPositionTicks = ObjectUtil.getValue<number>(res.UserData, 'PlaybackPositionTicks') / 10000
   }
   xcomponentController: XComponentController = new XComponentController()
+
+  @Builder
+  speedMenu() {
+    Menu() {
+      MenuItem({
+        content: '0.75X'
+      }).selectIcon(true)
+        .selected(this.playSpeed == '0.75f')
+        .onClick(() => {
+          if (!this.debounce()) {
+            return;
+          }
+          this.playSpeed = '0.75f'
+          this.mIjkMediaPlayer.setSpeed('0.75f')
+        })
+
+      MenuItem({
+        content: '1X'
+      }).selectIcon(true)
+        .selected(this.playSpeed == '1f')
+        .onClick(() => {
+          if (!this.debounce()) {
+            return;
+          }
+          this.playSpeed = '1f'
+          this.mIjkMediaPlayer.setSpeed('1f')
+        })
+
+      MenuItem({
+        content: '1.25X'
+      }).selectIcon(true)
+        .selected(this.playSpeed == '1.25f')
+        .onClick(() => {
+          if (!this.debounce()) {
+            return;
+          }
+          this.playSpeed = '1.25f'
+          this.mIjkMediaPlayer.setSpeed('1.25f')
+        })
+
+      MenuItem({
+        content: '1.5X'
+      }).selectIcon(true)
+        .selected(this.playSpeed == '1.5f')
+        .onClick(() => {
+          if (!this.debounce()) {
+            return;
+          }
+          this.playSpeed = '1.5f'
+          this.mIjkMediaPlayer.setSpeed('1.5f')
+        })
+
+      MenuItem({
+        content: '2.0X'
+      }).selectIcon(true)
+        .selected(this.playSpeed == '2.0f')
+        .onClick(() => {
+          if (!this.debounce()) {
+            return;
+          }
+          this.playSpeed = '2.0f'
+          this.mIjkMediaPlayer.setSpeed('2.0f')
+        })
+
+      MenuItem({
+        content: '3.0X'
+      }).selectIcon(true)
+        .selected(this.playSpeed == '3.0f')
+        .onClick(() => {
+          if (!this.debounce()) {
+            return;
+          }
+          this.playSpeed = '3.0f'
+          this.mIjkMediaPlayer.setSpeed('3.0f')
+        })
+
+    }
+    .menuItemDivider({
+      strokeWidth: LengthMetrics.vp(1.5),
+      color: '#d5d5d5',
+    })
+  }
+
+  @Builder
+  audioMenu() {
+    Menu() {
+      ForEach(this.videoData.audioList, (item: AudioList) => {
+        MenuItem({
+          content: item.displayTitle
+        }).selectIcon(true)
+          .selected(this.audioId == item.index)
+          .onClick(() => {
+            this.audioId = item.index
+          })
+      })
+    }
+    .menuItemDivider({
+      strokeWidth: LengthMetrics.vp(1.5),
+      color: '#d5d5d5',
+    })
+  }
+
+  @Builder
+  subtitleMenu() {
+    Menu() {
+      ForEach(this.subtitleList, (item: SubtitleList) => {
+        MenuItem({
+          content: item.displayLanguage
+        }).selectIcon(true)
+          .selected(this.subtitlesId == item.index)
+          .onClick(() => {
+            this.subtitlesCodec = item.codec
+            this.subtitlesId = item.index
+          })
+      })
+    }
+    .menuItemDivider({
+      strokeWidth: LengthMetrics.vp(1.5),
+      color: '#d5d5d5',
+    })
+  }
 
   build() {
     Flex({ direction: FlexDirection.Column }) {
@@ -318,47 +437,22 @@ struct IjkVideoPlayer {
               .layoutWeight(1)
 
               Row() {
+                Text('倍速')
+                  .fontColor(Color.White)
+                  .margin({ right: 20 })
+                  .fontSize(BasicConstants.FONT_NORMAL)
+                  .bindMenu(this.speedMenu())
+
                 Text('音频')
                   .fontColor(Color.White)
                   .margin({ right: 20 })
                   .fontSize(BasicConstants.FONT_NORMAL)
-                  .onClick(()=>{
-                    if (this.audioList.length > 1) {
-                      DialogUtil.showTextPicker({
-                        range: this.audioList.map((item: AudioList) => item.displayLanguage),
-                        canLoop: false,
-                        alignment: DialogAlignment.CenterEnd,
-                        selected: this.audioSelect,
-                        onAccept: (result) => {
-                          this.audioSelect = result.index
-                          this.audioId = this.audioList[result.index as number].index
-                        }
-                      })
-                    }else {
-                      ToastUtil.showToast('没有可选音频')
-                    }
-                  })
+                  .bindMenu(this.audioMenu())
 
                 Text('字幕')
                   .fontColor(Color.White)
                   .fontSize(BasicConstants.FONT_NORMAL)
-                  .onClick(() => {
-                    if (this.subtitleList.length > 1) {
-                      DialogUtil.showTextPicker({
-                        range: this.subtitleList.map((item: SubtitleList) => item.displayLanguage),
-                        canLoop: false,
-                        alignment: DialogAlignment.CenterEnd,
-                        selected: this.subtitleSelect,
-                        onAccept: (result) => {
-                          this.subtitleSelect = result.index
-                          this.subtitlesCodec = this.subtitleList[result.index as number].codec
-                          this.subtitlesId = this.subtitleList[result.index as number].index
-                        }
-                      })
-                    }else {
-                      ToastUtil.showToast('没有可选字幕')
-                    }
-                  })
+                  .bindMenu(this.subtitleMenu())
               }
               .justifyContent(FlexAlign.End)
               .layoutWeight(1)
@@ -394,42 +488,6 @@ struct IjkVideoPlayer {
           .border({ width: 0 })
           .borderStyle(BorderStyle.Dashed)
       }.width('100%').backgroundColor($r('sys.color.black')).clip(true)
-
-      //倍数播放设置
-      // Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Start }) {
-      //   Button('1X')
-      //     .onClick(() => {
-      //       if (!this.debounce()) {
-      //         return;
-      //       }
-      //       this.playSpeed = '1f'
-      //       this.mIjkMediaPlayer.setSpeed("1f");
-      //     })
-      //     .width('400px')
-      //     .height('80px')
-      //     .margin('15px')
-      //
-      //   Button('1.5X')
-      //     .onClick(() => {
-      //       if (!this.debounce()) {
-      //         return;
-      //       }
-      //       this.playSpeed = '1.5f'
-      //       this.mIjkMediaPlayer.setSpeed("1.5f");
-      //     })
-      //     .width('400px')
-      //     .height('80px')
-      //     .margin('15px')
-      //
-      //   Button('2X')
-      //     .onClick(() => {
-      //       this.playSpeed = '2f'
-      //       this.mIjkMediaPlayer.setSpeed("2f");
-      //     })
-      //     .width('400px')
-      //     .height('80px')
-      //     .margin('15px')
-      // }
 
       //音量设置
       // Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {

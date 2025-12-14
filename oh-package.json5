@@ -2,7 +2,7 @@
   "modelVersion": "5.0.5",
   "description": "Please describe the basic information.",
   "dependencies": {
-    "@pura/harmony-utils": "^1.3.8",
+    "@pura/harmony-utils": "^1.3.9",
     "@ohos/ijkplayer": "^2.0.7-rc.6"
   },
   "devDependencies": {

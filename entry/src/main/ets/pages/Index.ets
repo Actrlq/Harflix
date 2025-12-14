@@ -61,7 +61,7 @@ struct Index {
     }
     .width("100%")
     .height("100%")
-    .backgroundColor($r('app.color.theme_background_1'))
+    .backgroundColor($r('sys.color.background_secondary'))
 
   }
 }

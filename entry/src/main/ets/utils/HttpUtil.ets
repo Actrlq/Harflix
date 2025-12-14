@@ -45,7 +45,7 @@ export function AuthenticateHttp<T, K>(url: string, requestData: K) {
         } catch (error) {
 
         }
-        // reject(JSON.stringify(err))
+        reject(JSON.stringify(err))
         // 当该请求使用完毕时，调用destroy方法主动销毁。
         httpRequest.destroy()
       }
