@@ -49,14 +49,17 @@ export struct SeasonList {
               ForEach(this.SeasonNumber, (item: SLItems) => {
                 Text(`第 ${item.IndexNumber} 季`)
                   .fontSize(BasicConstants.FONT_NORMAL)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(Color.White)
                   .margin({ right: 10 })
                   .padding({ bottom: 5 })
+                  .borderColor(Color.White)
                   .borderWidth({ bottom: this.onChoose == item.IndexNumber ? 2 : 0 })
                   .onClick(() => {
                     this.onChoose = item.IndexNumber
                     this.SeasonId = item.Id
                   })
-              }, (item: SLItems) => item.IndexNumber.toString())
+              }, (item: SLItems) => item.IndexNumber?.toString())
             }
             .margin({ bottom: 5 })
           }
@@ -98,11 +101,13 @@ export struct SeasonList {
                         .fontSize(BasicConstants.FONT_SMALL)
                         .maxLines(1)
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
+                        .fontColor(Color.White)
+                        .fontWeight(FontWeight.Bold)
                     }
                     .height(20)
                     .width('100%')
                   }
-                  .width(150)
+                  .width(180)
                   .height('100%')
                 }
               }, (item: VRItems) => item.IndexNumber.toString())
@@ -113,7 +118,7 @@ export struct SeasonList {
           .scrollBar(BarState.Off)
         }
         .width('100%')
-        .height(120)
+        .height(140)
       }
     }
   }

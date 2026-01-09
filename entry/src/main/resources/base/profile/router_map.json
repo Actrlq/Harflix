@@ -1,0 +1,34 @@
+{
+  "routerMap": [
+    {
+      "name": "EpisodeView",
+      "pageSourceFile": "src/main/ets/view/EpisodeView.ets",
+      "buildFunction": "EpisodeViewBuilder"
+    },
+    {
+      "name": "AddEmby",
+      "pageSourceFile": "src/main/ets/view/AddEmby.ets",
+      "buildFunction": "AddEmbyBuilder"
+    },
+    {
+      "name": "AboutApp",
+      "pageSourceFile": "src/main/ets/set/AboutApp.ets",
+      "buildFunction": "AboutAppBuilder"
+    },
+    {
+      "name": "Details",
+      "pageSourceFile": "src/main/ets/view/Details.ets",
+      "buildFunction": "DetailsBuilder"
+    },
+    {
+      "name": "SearchPage",
+      "pageSourceFile": "src/main/ets/view/SearchPage.ets",
+      "buildFunction": "SearchPageBuilder"
+    },
+    {
+      "name": "DefaultPlayer",
+      "pageSourceFile": "src/main/ets/set/DefaultPlayer.ets",
+      "buildFunction": "DefaultPlayerBuilder"
+    }
+  ]
+}

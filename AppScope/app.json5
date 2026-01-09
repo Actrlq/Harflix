@@ -2,9 +2,9 @@
   "app": {
     "bundleName": "com.Actrlq.harflix",
     "vendor": "example",
-    "versionCode": 251214,
-    "versionName": "1.0.2",
-    "icon": "$media:app_logo",
+    "versionCode": 260109,
+    "versionName": "1.0.3",
+    "icon": "$media:layered_image",
     "label": "$string:app_name"
   }
 }

@@ -2,6 +2,7 @@ import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.Ab
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { AppUtil, WindowUtil } from '@pura/harmony-utils';
+import { RedPlayerConfigBuilder, RedPlayerInitManager, RedPlayerPreload } from '@rte-xhs/redplayer';
 
 const DOMAIN = 0x0000;
 
@@ -10,6 +11,9 @@ export default class EntryAbility extends UIAbility {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
     AppUtil.init(this.context);
+    let configBuilder = new RedPlayerConfigBuilder()
+    RedPlayerInitManager.initPlayer(configBuilder)
+    RedPlayerPreload.globalInit(this.context.cacheDir + '/redplayer', 20, 4, 0)
   }
 
   onDestroy(): void {

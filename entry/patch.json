@@ -1,8 +1,8 @@
 {
   "app": {
     "bundleName": "com.Actrlq.harflix",
-    "patchVersionCode": 2000945,
-    "versionCode": 251207
+    "patchVersionCode": 2001173,
+    "versionCode": 251214
   },
   "module": {
     "name": "entry",

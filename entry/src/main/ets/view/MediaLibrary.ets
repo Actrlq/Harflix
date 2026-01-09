@@ -1,7 +1,7 @@
 import { BasicConstants } from "../viewmodel/BasicConstants"
 import { ServerViews, SVItems, NewViewsList, VRItems, ViewingRecord } from "../viewmodel/DataConstraints"
 import { FetchNewViewsListApi, FetchServerViewsApi, FetchViewingRecordApi } from "../apis/ProductApi"
-import { LengthMetrics, router } from "@kit.ArkUI"
+import { LengthMetrics } from "@kit.ArkUI"
 import { KvUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils"
 import { FetchImageBackdrop, FetchImagePrimary, FetchServerUrl } from "../apis/AuxiliaryApi"
 import { distributedKVStore } from "@kit.ArkData"
@@ -10,24 +10,13 @@ import { LoadingView } from "../common/LoadingView"
 
 @Component
 export struct MediaLibrary {
+  @Consume pageInfo: NavPathStack
   @State ViewList: Array<NewViewsList>[][] = []
   @State MediaList: Array<SVItems> = []
   @State ListId: string[] = []
   @State WatchList: Array<VRItems> = []
   @State serverUrl: string = ''
-  //数据库监听
-  private callBack: Callback<distributedKVStore.ChangeNotification> = (key) => {
-    if (key.deleteEntries.length > 0) {
-      this.fetchServerViews().then(() => {
-        this.AddonData()
-      })
-      this.fetchViewingRecord()
-      this.fetchServerUrl()
-      this.getServername()
-      this.fetchKeydata()
-    }
-  }
-  @State embyList: UserInfo[] = []
+  @StorageProp('embyList') @Watch('onEmbyList') embyList: UserInfo[] = []
   @State servername: string = ''
   @State token: string = ''
   @State isLoading: boolean = true
@@ -42,10 +31,7 @@ export struct MediaLibrary {
         Text('更多')
           .fontSize(BasicConstants.FONT_NORMAL)
           .onClick(() => {
-            router.pushUrl({
-              url: 'pages/EpisodeList',
-              params: { Name: name, Id: id }
-            }).catch()
+            this.pageInfo.pushPathByName('EpisodeView', { Name: name, Id: id } as SVItems)
           })
       }
       .height(25)
@@ -77,11 +63,7 @@ export struct MediaLibrary {
           .height('100%')
           .width(120)
           .onClick(() => {
-            router.pushUrl({
-              url: 'pages/Details',
-              params: { Id: item.Id, Type: item.Type }
-            }).catch(() => {
-            })
+            this.pageInfo.pushPathByName('Details', { Id: item.Id, Type: item.Type } as NewViewsList)
           })
         }, (item: NewViewsList) => item.Id)
 
@@ -105,6 +87,7 @@ export struct MediaLibrary {
         }).selectIcon(true)
           .selected(this.token == item.token)
           .onClick(() => {
+            this.isLoading = true
             KvUtil.put('FirstLoad', 'emby_' + item.userId).then(() => {
               this.fetchServerViews().then(() => {
                 this.AddonData()
@@ -137,11 +120,11 @@ export struct MediaLibrary {
     } else {
       ToastUtil.showToast('网络不可用')
     }
-    KvUtil.onDataChange(distributedKVStore.SubscribeType.SUBSCRIBE_TYPE_ALL, this.callBack)
+
   }
 
   aboutToDisappear(): void {
-    KvUtil.offDataChange(this.callBack)
+
   }
 
   fetchServerViews = async () => {
@@ -152,14 +135,22 @@ export struct MediaLibrary {
     this.ListId = res.Items.filter(items => items.Name !== '播放列表').map((item: SVItems) => item.Id)
   }
   fetchNewViewsList = async (id: string) => {
-    const res = await FetchNewViewsListApi<Array<NewViewsList>[]>(id)
-    this.ViewList.push(res)
+    try {
+      const res = await FetchNewViewsListApi<Array<NewViewsList>[]>(id)
+      return res ?? []
+    } catch (err) {
+      console.error(`Fetch failed for fetchNewViewsList ${id}:`, err)
+      return []
+    }
   }
   AddonData = async () => {
     this.ViewList = []
-    for (const item of this.ListId) {
-      await this.fetchNewViewsList(item)
-    }
+    // 使用 Promise.all 并行处理异步请求
+    const fetchPromises = this.ListId.map((item): Promise<NewViewsList[][]> => this.fetchNewViewsList(item))
+    const results = await Promise.all(fetchPromises)
+
+    // 直接赋值代替 push 操作
+    this.ViewList = results.filter(item => item.length > 0)
     setTimeout(() => {
       this.isLoading = false
     }, 1000)
@@ -191,8 +182,22 @@ export struct MediaLibrary {
     this.token = UserInfo.token
   }
 
-  build() {
+  onEmbyList() {
+    if (this.embyList.length > 0) {
+      this.fetchServerViews().then(() => {
+        this.AddonData()
+      })
+      this.fetchViewingRecord()
+      this.fetchServerUrl()
+      this.getServername()
+    }else {
+      this.ViewList = []
+      this.MediaList = []
+      this.WatchList = []
+    }
+  }
 
+  build() {
     Scroll() {
       Column() {
         //顶部状态栏
@@ -219,10 +224,7 @@ export struct MediaLibrary {
           }
           .width('15%')
           .onClick(() => {
-            router.pushUrl({
-              url: 'pages/SearchPage'
-            }).catch(() => {
-            })
+            this.pageInfo.pushPathByName('SearchPage', null)
           })
 
           Column() {
@@ -239,7 +241,6 @@ export struct MediaLibrary {
               this.fetchViewingRecord()
               this.fetchServerUrl()
               this.getServername()
-              this.fetchKeydata()
             } else {
               ToastUtil.showToast('网络不可用')
             }
@@ -251,9 +252,11 @@ export struct MediaLibrary {
         .padding({ left: 10, right: 10 })
         .margin({ top: 40 })
 
+        Blank().layoutWeight(1)
+
         Stack() {
           //主页内容
-          Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center }) {
+          Column() {
 
             //继续观看
             Flex({ direction: FlexDirection.Column }) {
@@ -274,11 +277,8 @@ export struct MediaLibrary {
                         .borderRadius(10)
                         .clip(true)
                         .onClick(() => {
-                          router.pushUrl({
-                            url: 'pages/Details',
-                            params: { Id: item.SeriesId, Type: item.Type }
-                          }).catch(() => {
-                          })
+                          this.pageInfo.pushPathByName('Details',
+                            { Id: item.SeriesId, Type: item.Type } as NewViewsList)
                         })
 
                         Column() {
@@ -300,7 +300,6 @@ export struct MediaLibrary {
                 .scrollBar(BarState.Off)
               }
             }
-            .width('100%')
 
             //媒体库列表
             Flex({ direction: FlexDirection.Column }) {
@@ -309,6 +308,7 @@ export struct MediaLibrary {
                   .fontSize(BasicConstants.FONT_BIG)
                   .height(25)
                   .fontWeight(FontWeight.Bold)
+                  .textAlign(TextAlign.Start)
                 List({ space: 5 }) {
                   ForEach(this.MediaList.filter(items => items.Name !== '播放列表'), (item: SVItems) => {
                     ListItem() {
@@ -331,10 +331,7 @@ export struct MediaLibrary {
                     .height('100%')
                     .width(150)
                     .onClick(() => {
-                      router.pushUrl({
-                        url: 'pages/EpisodeList',
-                        params: { Name: item.Name, Id: item.Id }
-                      }).catch()
+                      this.pageInfo.pushPathByName('EpisodeView', { Name: item.Name, Id: item.Id } as SVItems)
                     })
                   }, (item: SVItems) => item.Guid)
 
@@ -348,17 +345,17 @@ export struct MediaLibrary {
 
             }
             .width('100%')
-            .height(130)
+            .height(140)
             .margin({ top: 10 })
 
             //媒体库
-            Flex({ direction: FlexDirection.Column }) {
+            Column() {
               ForEach(this.MediaList.filter(items => items.Name !== '播放列表'), (item: SVItems, index: number) => {
                 Column() {
                   this.ListUtils(item.Name, index, item.Id)
                 }
                 .width('100%')
-                .height(230)
+                .height(240)
               }, (item: SVItems) => item.Guid)
 
             }
@@ -366,17 +363,21 @@ export struct MediaLibrary {
             .margin({ top: 10 })
 
           }
-          .width('100%')
+          .visibility(this.isLoading ? Visibility.None : Visibility.Visible)
 
           if (this.isLoading) {
             LoadingView()
           }
+
         }
 
       }
+      .padding({
+        left: 10,
+        right: 10
+      })
     }
     .scrollBar(BarState.Off)
 
   }
 }
-

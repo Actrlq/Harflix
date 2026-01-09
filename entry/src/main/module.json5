@@ -12,6 +12,7 @@
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
+    "routerMap": "$profile:router_map",
     "abilities": [
       {
         "name": "EntryAbility",
@@ -19,7 +20,7 @@
         "description": "$string:EntryAbility_desc",
         "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
-        "startWindowIcon": "$media:app_logo",
+        "startWindowIcon": "$media:app_logo_bg",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "skills": [

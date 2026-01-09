@@ -18,25 +18,13 @@ import { AudioList, SubtitleList } from '../utils/InfoFilter';
 import { FetchSubtitleApi } from '../apis/AuxiliaryApi';
 import { FetchDetailsApi, ReturnProgressApi } from '../apis/ProductApi';
 import { DetailsModel } from '../viewmodel/DataConstraints';
+import { VideoDataModel } from './VideoDataModel';
 
-export enum PlayStatus {
+enum PlayStatus {
   INIT,
   PLAY,
   PAUSE,
   DONE
-}
-
-class videoUrlModel {
-  video: string = ''
-  name: string = ''
-  videoId: string = ''
-  mediaSourceId: string = ''
-  playSessionId: string = ''
-  subtitleList: SubtitleList[] = []
-  subtitles: SubtitleItem[] = []
-  audioList: AudioList[] = []
-  audioId: number = 1
-  subtitlesId: number = 3
 }
 
 @Entry
@@ -60,7 +48,7 @@ struct IjkVideoPlayer {
   @State videoWidth: string = '100%'
   @State initAspectRatio: number = 1
   @State videoAspectRatio: number = this.initAspectRatio
-  @State videoData: videoUrlModel = router.getParams() as videoUrlModel
+  @State videoData: VideoDataModel = router.getParams() as VideoDataModel
   private last: number = 0
   @State videoParentAspectRatio: number = this.initAspectRatio
   private mIjkMediaPlayer = IjkMediaPlayer.getInstance()
@@ -81,7 +69,7 @@ struct IjkVideoPlayer {
   //当前显示字幕
   @State CurrentSubtitle: string = ''
   private subtitleList: SubtitleList[] = this.videoData.subtitleList
-  @State subtitlesCodec: string = ''
+  private subtitlesCodec: string = ''
   //字幕index
   @State @Watch('onSubtitlesIdChanged') subtitlesId: number = this.videoData.subtitlesId
   private subtitleProcessor: SubtitleProcessor = new SubtitleProcessor()
@@ -126,7 +114,7 @@ struct IjkVideoPlayer {
     }
     this.mIjkMediaPlayer.off('audioInterrupt');
     this.mIjkMediaPlayer.off('deviceChange');
-    this.videoData = new videoUrlModel()
+    this.videoData = new VideoDataModel()
     WindowUtil.setPreferredOrientation(window.Orientation.PORTRAIT)
     WindowUtil.setWindowSystemBarEnable(["status", "navigation"])
     this.subtitles = []
@@ -163,6 +151,7 @@ struct IjkVideoPlayer {
       this.subtitlesCodec)
     this.subtitles = this.subtitleProcessor.parse(res, this.subtitlesCodec)
   }
+
   returnProgress = async () => {
     if (NetworkUtil.isNetworkAvailable() === false) {
       return
@@ -176,10 +165,12 @@ struct IjkVideoPlayer {
       EventName: 'TimeUpdate',
     })
   }
+
   fetchDetails = async () => {
     const res = await FetchDetailsApi<DetailsModel>(this.videoData.videoId)
     this.playbackPositionTicks = ObjectUtil.getValue<number>(res.UserData, 'PlaybackPositionTicks') / 10000
   }
+
   xcomponentController: XComponentController = new XComponentController()
 
   @Builder
@@ -313,7 +304,7 @@ struct IjkVideoPlayer {
             type: 'surface',
             libraryname: 'ijkplayer_napi'
           })
-            .onLoad((event?: object) => {
+            .onLoad(async (event?: object) => {
               if (!!event) {
                 this.initDelayPlay(event);
               }
@@ -333,7 +324,7 @@ struct IjkVideoPlayer {
               .fontSize(25)
               .fontColor(Color.White)
               .width('100%')
-              .padding(20)
+              .padding(10)
               .textAlign(TextAlign.Center)
               .textShadow({
                 radius: vp2px(2),
@@ -520,7 +511,7 @@ struct IjkVideoPlayer {
     setTimeout(() => {
       this.startPlayOrResumePlay();
       this.mFirst = false;
-    }, 300)
+    }, 500)
   }
 
   private startPlayOrResumePlay() {
@@ -529,7 +520,7 @@ struct IjkVideoPlayer {
     if (this.CONTROL_PlayStatus === PlayStatus.INIT) {
       this.stopProgressTask()
       this.startProgressTask()
-      this.play(this.videoData.video)
+      this.play(this.videoData.videoSrc)
     }
     if (this.CONTROL_PlayStatus === PlayStatus.PAUSE) {
       this.mIjkMediaPlayer.start()
@@ -919,6 +910,7 @@ struct IjkVideoPlayer {
     this.updateSubtitles()
   }
 
+  //上传进度
   private updateProgress() {
     if (this.CONTROL_PlayStatus === PlayStatus.INIT) {
       return
@@ -929,6 +921,16 @@ struct IjkVideoPlayer {
       }
       this.updateProgress()
     }, 30000)
+  }
+
+  private playNext() {
+    if (!this.debounce()) {
+      return;
+    }
+    this.CONTROL_PlayStatus = PlayStatus.INIT;
+    this.stop();
+    // this.videoData = 下一集视频数据
+    this.startPlayOrResumePlay()
   }
 
   debounce() {

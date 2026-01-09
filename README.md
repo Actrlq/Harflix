@@ -1,5 +1,5 @@
 <p align="center">
-<img src='./entry/src/main/resources/base/media/app_logo.png' width="100" height="100" alt="logo">
+<img src='./entry/src/main/resources/base/media/app_logo_bg.png' width="64" height="64" alt="logo">
 </p>
 <div align="center">
     <h1>Harflix播放器</h1>
@@ -23,4 +23,4 @@
 
 - 如果你喜欢本项目，觉得本项目还不错，可以支持一下作者。
 
-<img src="images/SKM.jpg" width="260" alt="">
+<img src="images/SKM.jpg" width="200" alt="">

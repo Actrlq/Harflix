@@ -6,6 +6,7 @@ import { SetUp } from "../view/SetUp"
 @Entry
 @Component
 struct Index {
+  @Provide pageInfo: NavPathStack = new NavPathStack()
   @State currentIndex: number = 0
 
   aboutToAppear(): void {
@@ -29,39 +30,37 @@ struct Index {
   }
 
   build() {
-    Column() {
-      Tabs({ barPosition: BarPosition.End }) {
-        //媒体库
-        TabContent() {
-          MediaLibrary()
-        }.tabBar(this.TabList('媒体库', 0, $r('app.media.meitiku')))
+    Navigation(this.pageInfo) {
+      Column() {
+        Tabs({ barPosition: BarPosition.End }) {
+          //媒体库
+          TabContent() {
+            MediaLibrary()
+          }.tabBar(this.TabList('媒体库', 0, $r('app.media.meitiku')))
 
-        //添加服务器
-        TabContent() {
-          EmbyList()
-        }.tabBar(this.TabList('服务器', 1, $r("app.media.tianjia")))
+          //添加服务器
+          TabContent() {
+            EmbyList()
+          }.tabBar(this.TabList('服务器', 1, $r("app.media.tianjia")))
 
-        //设置
-        TabContent() {
-          Column() {
-            SetUp()
-          }
-        }.tabBar(this.TabList('设置', 2, $r("app.media.shezhi")))
+          //设置
+          TabContent() {
+            Column() {
+              SetUp()
+            }
+          }.tabBar(this.TabList('设置', 2, $r("app.media.shezhi")))
+        }
+        .barWidth(400)
+        .onChange((index: number) => {
+          this.currentIndex = index
+        })
+        .scrollable(false)
+        .margin({ bottom: 15 })
       }
-      .barWidth(400)
-      .onChange((index: number) => {
-        this.currentIndex = index
-      })
-      .scrollable(false)
-      .padding({
-        bottom: 20,
-        left: 10,
-        right: 10
-      })
+      .backgroundColor($r('sys.color.background_secondary'))
     }
-    .width("100%")
-    .height("100%")
-    .backgroundColor($r('sys.color.background_secondary'))
-
+    .hideTitleBar(true)
+    .hideToolBar(true)
+    .mode(NavigationMode.Stack)
   }
 }

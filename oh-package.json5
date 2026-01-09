@@ -3,7 +3,8 @@
   "description": "Please describe the basic information.",
   "dependencies": {
     "@pura/harmony-utils": "^1.3.9",
-    "@ohos/ijkplayer": "^2.0.7-rc.6"
+    "@ohos/ijkplayer": "^2.0.7",
+    "@rte-xhs/redplayer": "^1.0.0"
   },
   "devDependencies": {
     "@ohos/hypium": "1.0.21",
