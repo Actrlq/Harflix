@@ -2,19 +2,19 @@ import { router } from '@kit.ArkUI'
 import { ImportantInformation, SystemInfo } from '../viewmodel/DataConstraints'
 import { FetchAuthenticateApi, FetchServerInfoApi } from '../apis/ProductApi'
 import { BasicConstants } from '../viewmodel/BasicConstants'
-import { KvUtil, ObjectUtil } from '@pura/harmony-utils'
+import { AppUtil, KvUtil, ObjectUtil } from '@pura/harmony-utils'
 import { UserInfo } from '../viewmodel/DataConstraints'
 
 @Component
 struct AddEmby {
   private pageInfo: NavPathStack | null = null
   private data: UserInfo = new UserInfo
-  private servername: string = this.data.servername
-  private address: string = this.data.address
-  @State http: string = 'https' || this.data.http
-  private port: string = this.data.port
-  private username: string = this.data.username
-  private password: string = ""
+  private servername: string = ''
+  private address: string = ''
+  @State http: string = 'https'
+  private port: string = ''
+  private username: string = ''
+  private password: string = ''
   private userdata: UserInfo = new UserInfo
   //弹窗状态
   @State isShow: boolean = false
@@ -222,8 +222,13 @@ struct AddEmby {
     .onReady((context) => {
       this.pageInfo = context.pathStack
       this.data = context.pathInfo.param as UserInfo
+      this.servername = this.data.servername
+      this.address = this.data.address
+      this.http =  this.data.http
+      this.port = this.data.port
+      this.username = this.data.username
     })
-    .padding({ top: 40 })
+    .padding({ top: px2vp(AppUtil.getStatusBarHeight()) })
     .backgroundColor($r('sys.color.background_secondary'))
 
   }

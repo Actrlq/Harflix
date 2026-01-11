@@ -1,3 +1,4 @@
+import { AppUtil } from "@pura/harmony-utils"
 import { ListGroup, ListGroupData } from "../viewmodel/ListGroupModel"
 
 @Component
@@ -9,11 +10,15 @@ export struct SetUp {
       group: [
         {
           textContent: '默认播放器',
-          onclick:()=>{ this.pageInfo.pushPathByName('DefaultPlayer',null) }
+          onclick: () => {
+            this.pageInfo.pushPathByName('DefaultPlayer', null)
+          }
         },
         {
           textContent: '关于',
-          onclick:()=>{ this.pageInfo.pushPathByName('AboutApp',null) }
+          onclick: () => {
+            this.pageInfo.pushPathByName('AboutApp', null)
+          }
         }
       ]
     }
@@ -23,7 +28,7 @@ export struct SetUp {
     NavDestination() {
       Column() {
         ForEach(this.setList, (groupData: ListGroupData) => {
-          Flex({ direction: FlexDirection.Row, wrap:FlexWrap.Wrap }) {
+          Flex({ direction: FlexDirection.Row, wrap: FlexWrap.Wrap }) {
             ForEach(groupData.group, (item: ListGroup, index: number) => {
               Row() {
                 Column() {
@@ -50,6 +55,13 @@ export struct SetUp {
               .height(50)
               .borderRadius($r('sys.float.corner_radius_level8'))
               .onClick(item.onclick)
+
+              if (index !== groupData.group.length - 1) {
+                Divider()
+                  .color('#F1F3F5')
+                  .margin({ left: 10, right: 10 })
+                  .strokeWidth(1)
+              }
             })
           }
           .backgroundColor($r('sys.color.comp_background_list_card'))
@@ -63,11 +75,10 @@ export struct SetUp {
       .padding({ left: 20, right: 20 })
     }
     .title('设置')
-    .padding({ top: 40 })
+    .padding({ top: px2vp(AppUtil.getStatusBarHeight()) })
     .backgroundColor($r('sys.color.background_secondary'))
 
   }
-
 }
 
 

@@ -29,6 +29,11 @@
       "name": "DefaultPlayer",
       "pageSourceFile": "src/main/ets/set/DefaultPlayer.ets",
       "buildFunction": "DefaultPlayerBuilder"
+    },
+    {
+      "name": "CollectionPage",
+      "pageSourceFile": "src/main/ets/view/CollectionPage.ets",
+      "buildFunction": "CollectionPageBuilder"
     }
   ]
 }

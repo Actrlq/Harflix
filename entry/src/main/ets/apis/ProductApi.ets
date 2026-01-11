@@ -95,3 +95,9 @@ export async function ReturnProgressApi<T>(progress:Progress): Promise<boolean> 
   MyPostHttp<T, Progress>('ReturnProgressApi',`${userInfo.url}/emby/Sessions/Playing/Progress`,progress)
   return true
 }
+
+//获取收藏列表
+export async function FetchCollectionApi<T>(): Promise<T> {
+  const userInfo = await getUserInfo()
+  return MyRequestHttp<T>('FetchCollectionApi',`${userInfo.url}/emby/Users/${userInfo.id}/Items?SortBy=SortName&SortOrder=Ascending&Fields=BasicSyncInfo,Container,PrimaryImageAspectRatio,ProductionYear,Status,EndDate,CommunityRating,OfficialRating&Recursive=true&Filters=IsFavorite&IncludeItemTypes=Series,Movie`)
+}

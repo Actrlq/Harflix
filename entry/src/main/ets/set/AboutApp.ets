@@ -37,7 +37,7 @@ struct AboutApp {
     NavDestination(){
       Column() {
         Column() {
-          Image($r('app.media.app_logo'))
+          Image($r('app.media.app_logo_bg'))
             .width('20%')
             .margin({ bottom: 10 })
           Text($r('app.string.app_name'))
@@ -68,6 +68,11 @@ struct AboutApp {
             this.Github()
           })
 
+          Divider()
+            .color('#F1F3F5')
+            .margin({ left: 10, right: 10 })
+            .strokeWidth(1)
+
           Row() {
             Text('Gitee仓库地址')
               .fontSize(BasicConstants.FONT_NORMAL)
@@ -95,7 +100,7 @@ struct AboutApp {
       .padding({ left: 20, right: 20 })
     }
     .title('关于')
-    .padding({top:40})
+    .padding({ top: px2vp(AppUtil.getStatusBarHeight()) })
     .backgroundColor($r('sys.color.background_secondary'))
 
   }

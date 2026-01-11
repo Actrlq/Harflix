@@ -2,7 +2,7 @@ import { BasicConstants } from "../viewmodel/BasicConstants"
 import { ServerViews, SVItems, NewViewsList, VRItems, ViewingRecord } from "../viewmodel/DataConstraints"
 import { FetchNewViewsListApi, FetchServerViewsApi, FetchViewingRecordApi } from "../apis/ProductApi"
 import { LengthMetrics } from "@kit.ArkUI"
-import { KvUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils"
+import { AppUtil, KvUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils"
 import { FetchImageBackdrop, FetchImagePrimary, FetchServerUrl } from "../apis/AuxiliaryApi"
 import { distributedKVStore } from "@kit.ArkData"
 import { UserInfo } from "../viewmodel/DataConstraints"
@@ -20,6 +20,7 @@ export struct MediaLibrary {
   @State servername: string = ''
   @State token: string = ''
   @State isLoading: boolean = true
+  @State refreshing: boolean = false
 
   @Builder
   ListUtils(name: string, index: number, id: string) {
@@ -84,8 +85,8 @@ export struct MediaLibrary {
       ForEach(this.embyList, (item: UserInfo) => {
         MenuItem({
           content: item.servername ? item.servername : '无名称'
-        }).selectIcon(true)
-          .selected(this.token == item.token)
+        })
+          .backgroundColor(this.token == item.token ? 'rgba(144,238,144,1)' : Color.Transparent)
           .onClick(() => {
             this.isLoading = true
             KvUtil.put('FirstLoad', 'emby_' + item.userId).then(() => {
@@ -106,6 +107,10 @@ export struct MediaLibrary {
   }
 
   aboutToAppear(): void {
+    this.ViewList = []
+    this.MediaList = []
+    this.WatchList = []
+    this.ListId = []
     setTimeout(() => {
       this.isLoading = false
     }, 30000)
@@ -123,13 +128,9 @@ export struct MediaLibrary {
 
   }
 
-  aboutToDisappear(): void {
-
-  }
-
   fetchServerViews = async () => {
-    this.MediaList = []
-    this.ListId = []
+    // this.MediaList = []
+    // this.ListId = []
     const res = await FetchServerViewsApi<ServerViews>()
     this.MediaList = res.Items
     this.ListId = res.Items.filter(items => items.Name !== '播放列表').map((item: SVItems) => item.Id)
@@ -144,7 +145,7 @@ export struct MediaLibrary {
     }
   }
   AddonData = async () => {
-    this.ViewList = []
+    // this.ViewList = []
     // 使用 Promise.all 并行处理异步请求
     const fetchPromises = this.ListId.map((item): Promise<NewViewsList[][]> => this.fetchNewViewsList(item))
     const results = await Promise.all(fetchPromises)
@@ -156,7 +157,7 @@ export struct MediaLibrary {
     }, 1000)
   }
   fetchViewingRecord = async () => {
-    this.WatchList = []
+    // this.WatchList = []
     const res = await FetchViewingRecordApi<ViewingRecord>()
     this.WatchList = res.Items
   }
@@ -190,194 +191,206 @@ export struct MediaLibrary {
       this.fetchViewingRecord()
       this.fetchServerUrl()
       this.getServername()
-    }else {
+    } else {
       this.ViewList = []
       this.MediaList = []
       this.WatchList = []
+      this.ListId = []
     }
   }
 
   build() {
-    Scroll() {
-      Column() {
-        //顶部状态栏
-        Row() {
-          Column() {
-            Image($r('app.media.emby'))
-              .height('80%')
-          }
-          .width('25%')
-          .alignItems(HorizontalAlign.Start)
-          .bindMenu(this.serverMenu())
-
-          Column() {
-            Text(this.servername ? this.servername : 'Harflix')
-              .fontSize(BasicConstants.FONT_NORMAL)
-              .fontSize(BasicConstants.FONT_BIG)
-          }
-          .width('50%')
-          .justifyContent(FlexAlign.Center)
-
-          Column() {
-            Image($r('app.media.sousuo'))
-              .height('60%')
-          }
-          .width('15%')
-          .onClick(() => {
-            this.pageInfo.pushPathByName('SearchPage', null)
-          })
-
-          Column() {
-            Image($r('app.media.shuaxin'))
-              .height('50%')
-          }
-          .width('10%')
-          .onClick(async () => {
-            this.isLoading = true
-            if (NetworkUtil.isNetworkAvailable()) {
-              this.fetchServerViews().then(() => {
-                this.AddonData()
-              })
-              this.fetchViewingRecord()
-              this.fetchServerUrl()
-              this.getServername()
-            } else {
-              ToastUtil.showToast('网络不可用')
-            }
-          })
-
-        }
-        .width('100%')
-        .height(50)
-        .padding({ left: 10, right: 10 })
-        .margin({ top: 40 })
-
-        Blank().layoutWeight(1)
-
-        Stack() {
-          //主页内容
-          Column() {
-
-            //继续观看
-            Flex({ direction: FlexDirection.Column }) {
-              if (this.WatchList.length > 0) {
-                Text('继续观看')
-                  .fontSize(BasicConstants.FONT_BIG)
-                  .height(25)
-                  .fontWeight(FontWeight.Bold)
-                List({ space: 5 }) {
-                  ForEach(this.WatchList, (item: VRItems) => {
-                    ListItem() {
-                      Flex({ direction: FlexDirection.Column }) {
-                        Column() {
-                          Image(this.serverUrl + FetchImageBackdrop(item.SeriesId))
-                            .alt($r('app.media.Image_loading_failed'))
-                        }
-                        .width('100%')
-                        .borderRadius(10)
-                        .clip(true)
-                        .onClick(() => {
-                          this.pageInfo.pushPathByName('Details',
-                            { Id: item.SeriesId, Type: item.Type } as NewViewsList)
-                        })
-
-                        Column() {
-                          Text(`${item.SeriesName}: S${item.ParentIndexNumber}E${item.IndexNumber}`)
-                            .fontSize(BasicConstants.FONT_NORMAL)
-                        }
-                        .width('100%')
-                        .justifyContent(FlexAlign.Center)
-                      }
-                    }
-                    .height('100%')
-                    .width(240)
-                  }, (item: VRItems) => item.Id)
-
-                }
-                .width('100%')
-                .height(150)
-                .listDirection(Axis.Horizontal)
-                .scrollBar(BarState.Off)
-              }
-            }
-
-            //媒体库列表
-            Flex({ direction: FlexDirection.Column }) {
-              if (this.MediaList.length > 0) {
-                Text('媒体库')
-                  .fontSize(BasicConstants.FONT_BIG)
-                  .height(25)
-                  .fontWeight(FontWeight.Bold)
-                  .textAlign(TextAlign.Start)
-                List({ space: 5 }) {
-                  ForEach(this.MediaList.filter(items => items.Name !== '播放列表'), (item: SVItems) => {
-                    ListItem() {
-                      Flex({ direction: FlexDirection.Column }) {
-                        Flex({ justifyContent: FlexAlign.Center }) {
-                          Image(this.serverUrl + FetchImagePrimary(item.Id) + '?maxWidth=400')
-                            .alt($r('app.media.Image_loading_failed'))
-                        }
-                        .width('100%')
-                        .borderRadius(10)
-                        .clip(true)
-
-                        Flex({ justifyContent: FlexAlign.Center }) {
-                          Text(item.Name)
-                            .fontSize(BasicConstants.FONT_NORMAL)
-                        }
-                        .width('100%')
-                      }
-                    }
-                    .height('100%')
-                    .width(150)
-                    .onClick(() => {
-                      this.pageInfo.pushPathByName('EpisodeView', { Name: item.Name, Id: item.Id } as SVItems)
-                    })
-                  }, (item: SVItems) => item.Guid)
-
-                }
-                .width('100%')
-                .height('100%')
-                .margin({ top: 10 })
-                .listDirection(Axis.Horizontal)
-                .scrollBar(BarState.Off)
-              }
-
-            }
-            .width('100%')
-            .height(140)
-            .margin({ top: 10 })
-
-            //媒体库
+    Refresh({ refreshing: $$this.refreshing,promptText:'正在刷新...'}) {
+      Scroll() {
+        Column() {
+          //顶部状态栏
+          Row() {
             Column() {
-              ForEach(this.MediaList.filter(items => items.Name !== '播放列表'), (item: SVItems, index: number) => {
-                Column() {
-                  this.ListUtils(item.Name, index, item.Id)
-                }
-                .width('100%')
-                .height(240)
-              }, (item: SVItems) => item.Guid)
-
+              Image($r('app.media.emby'))
+                .height('70%')
             }
-            .width('100%')
-            .margin({ top: 10 })
+            .width('25%')
+            .alignItems(HorizontalAlign.Start)
+            .bindMenu(this.serverMenu())
+
+            Column() {
+              Text(this.servername ? this.servername : 'Harflix')
+                .fontSize(BasicConstants.FONT_NORMAL)
+                .fontSize(BasicConstants.FONT_BIG)
+            }
+            .width('50%')
+            .justifyContent(FlexAlign.Center)
+
+            Column() {
+              SymbolGlyph($r('sys.symbol.magnifyingglass'))
+                .fontSize(25)
+            }
+            .width('15%')
+            .onClick(() => {
+              this.pageInfo.pushPathByName('SearchPage', null)
+            })
+
+            Column() {
+              SymbolGlyph($r('sys.symbol.star_badge_list'))
+                .fontSize(25)
+            }
+            .width('10%')
+            .onClick(() => {
+              this.pageInfo.pushPathByName('CollectionPage', null)
+            })
 
           }
-          .visibility(this.isLoading ? Visibility.None : Visibility.Visible)
+          .width('100%')
+          .height(50)
+          .padding({ left: 10, right: 10 })
 
-          if (this.isLoading) {
-            LoadingView()
+          Blank().layoutWeight(1)
+
+          Stack() {
+            //主页内容
+            Column() {
+
+              //继续观看
+              Flex({ direction: FlexDirection.Column }) {
+                if (this.WatchList.length > 0) {
+                  Text('继续观看')
+                    .fontSize(BasicConstants.FONT_BIG)
+                    .height(25)
+                    .fontWeight(FontWeight.Bold)
+                  List({ space: 5 }) {
+                    ForEach(this.WatchList, (item: VRItems) => {
+                      ListItem() {
+                        Flex({ direction: FlexDirection.Column }) {
+                          Column() {
+                            Image(this.serverUrl + FetchImageBackdrop(item.SeriesId))
+                              .alt($r('app.media.Image_loading_failed'))
+                          }
+                          .width('100%')
+                          .borderRadius(10)
+                          .clip(true)
+                          .onClick(() => {
+                            this.pageInfo.pushPathByName('Details',
+                              { Id: item.SeriesId, Type: item.Type } as NewViewsList)
+                          })
+
+                          Column() {
+                            Text(`${item.SeriesName}: S${item.ParentIndexNumber}E${item.IndexNumber}`)
+                              .fontSize(BasicConstants.FONT_NORMAL)
+                          }
+                          .width('100%')
+                          .justifyContent(FlexAlign.Center)
+                        }
+                      }
+                      .height('100%')
+                      .width(240)
+                    }, (item: VRItems) => item.Id)
+
+                  }
+                  .width('100%')
+                  .height(150)
+                  .listDirection(Axis.Horizontal)
+                  .scrollBar(BarState.Off)
+                }
+              }
+
+              //媒体库列表
+              Flex({ direction: FlexDirection.Column }) {
+                if (this.MediaList.length > 0) {
+                  Text('媒体库')
+                    .fontSize(BasicConstants.FONT_BIG)
+                    .height(25)
+                    .fontWeight(FontWeight.Bold)
+                    .textAlign(TextAlign.Start)
+                  List({ space: 5 }) {
+                    ForEach(this.MediaList.filter(items => items.Name !== '播放列表'), (item: SVItems) => {
+                      ListItem() {
+                        Flex({ direction: FlexDirection.Column }) {
+                          Flex({ justifyContent: FlexAlign.Center }) {
+                            Image(this.serverUrl + FetchImagePrimary(item.Id) + '?maxWidth=400')
+                              .alt($r('app.media.Image_loading_failed'))
+                          }
+                          .width('100%')
+                          .borderRadius(10)
+                          .clip(true)
+
+                          Flex({ justifyContent: FlexAlign.Center }) {
+                            Text(item.Name)
+                              .fontSize(BasicConstants.FONT_NORMAL)
+                          }
+                          .width('100%')
+                        }
+                      }
+                      .height('100%')
+                      .width(150)
+                      .onClick(() => {
+                        this.pageInfo.pushPathByName('EpisodeView', { Name: item.Name, Id: item.Id } as SVItems)
+                      })
+                    }, (item: SVItems) => item.Guid)
+
+                  }
+                  .width('100%')
+                  .height('100%')
+                  .margin({ top: 10 })
+                  .listDirection(Axis.Horizontal)
+                  .scrollBar(BarState.Off)
+                }
+
+              }
+              .width('100%')
+              .height(140)
+              .margin({ top: 10 })
+
+              //媒体库
+              Column() {
+                ForEach(this.MediaList.filter(items => items.Name !== '播放列表'), (item: SVItems, index: number) => {
+                  Column() {
+                    this.ListUtils(item.Name, index, item.Id)
+                  }
+                  .width('100%')
+                  .height(240)
+                }, (item: SVItems) => item.Guid)
+
+              }
+              .width('100%')
+              .margin({ top: 10 })
+
+            }
+            .visibility(this.isLoading ? Visibility.None : Visibility.Visible)
+
+            if (this.isLoading) {
+              LoadingView()
+            }
+
           }
 
         }
-
+        .padding({
+          left: 10,
+          right: 10,
+          bottom: 70
+        })
       }
-      .padding({
-        left: 10,
-        right: 10
-      })
+      .scrollBar(BarState.Off)
     }
-    .scrollBar(BarState.Off)
-
+    .pullDownRatio(0.3)
+    .onRefreshing(async () => {
+      if (NetworkUtil.isNetworkAvailable()) {
+        this.fetchServerViews().then(() => {
+          this.AddonData().then(() => {
+            this.refreshing = false
+          })
+        })
+        this.fetchViewingRecord()
+        this.fetchServerUrl()
+        this.getServername()
+      } else {
+        ToastUtil.showToast('网络不可用')
+        this.refreshing = false
+      }
+      setTimeout(() => {
+        this.refreshing = false
+      }, 30000)
+    })
+    .margin({ top: px2vp(AppUtil.getStatusBarHeight()) })
   }
 }

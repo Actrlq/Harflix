@@ -1,8 +1,9 @@
 import { BasicConstants } from "../viewmodel/BasicConstants"
 import { MediaQueryUtil } from '../utils/MediaQueryUtil'
-import { DialogAction, DialogUtil, KvUtil, PreferencesUtil } from "@pura/harmony-utils"
+import { AppUtil, DialogAction, DialogUtil, KvUtil, PreferencesUtil } from "@pura/harmony-utils"
 import { distributedKVStore } from "@kit.ArkData"
 import { UserInfo } from "../viewmodel/DataConstraints"
+import { LengthMetrics } from "@kit.ArkUI"
 
 @Component
 export struct EmbyList {
@@ -82,6 +83,10 @@ export struct EmbyList {
           }
         })
     }
+    .menuItemDivider({
+      strokeWidth: LengthMetrics.vp(1.5),
+      color: '#d5d5d5',
+    })
   }
 
   build() {
@@ -141,12 +146,12 @@ export struct EmbyList {
           }
           .width("100%")
         }
-        .padding({ left: 15, right: 15 })
+        .padding({ left: 15, right: 15, bottom:70 })
         .scrollBarWidth(0)
     }
     .title('服务器')
     .menus([this.addTool])
-    .padding({top:40})
+    .padding({ top: px2vp(AppUtil.getStatusBarHeight()) })
     .backgroundColor($r('sys.color.background_secondary'))
 
   }

@@ -4,6 +4,7 @@ import { BasicConstants } from '../viewmodel/BasicConstants'
 import { NewViewsList, SVItems, ViewingRecord, VRItems } from '../viewmodel/DataConstraints'
 import { FetchImagePrimary, FetchServerUrl } from '../apis/AuxiliaryApi'
 import { LoadingView } from '../common/LoadingView'
+import { AppUtil } from '@pura/harmony-utils'
 
 @Component
 struct EpisodeView{
@@ -88,7 +89,7 @@ struct EpisodeView{
         }, 1000)
       })
     })
-    .padding({top:40})
+    .padding({ top: px2vp(AppUtil.getStatusBarHeight()) })
     .backgroundColor($r('sys.color.background_secondary'))
   }
 }

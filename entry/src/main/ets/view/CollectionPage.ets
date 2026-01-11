@@ -1,24 +1,25 @@
-import { FetchSearchApi } from '../apis/ProductApi'
+import { AppUtil } from '@pura/harmony-utils'
+import { FetchImagePrimary, FetchServerUrl } from '../apis/AuxiliaryApi'
+import { FetchCollectionApi } from '../apis/ProductApi'
+import { LoadingView } from '../common/LoadingView'
 import { BasicConstants } from '../viewmodel/BasicConstants'
 import { NewViewsList, ViewingRecord, VRItems } from '../viewmodel/DataConstraints'
-import { FetchImagePrimary, FetchServerUrl } from '../apis/AuxiliaryApi'
-import { LoadingView } from '../common/LoadingView'
-import { AppUtil } from '@pura/harmony-utils'
 
 @Component
-struct SearchPage {
+struct CollectionPage{
   @Consume pageInfo: NavPathStack
   @State data: VRItems[] = []
-  private name: string = ''
   @State serverUrl: string = ''
   @State isLoading: boolean = false
 
   aboutToAppear(): void {
+    this.fetchCollection()
     this.fetchServerUrl()
   }
 
-  fetchSearch = async () => {
-    const res = await FetchSearchApi<ViewingRecord>(encodeURIComponent(this.name))
+  fetchCollection = async ()=>{
+    this.isLoading = true
+    const res = await FetchCollectionApi<ViewingRecord>()
     this.data = res.Items
   }
   fetchServerUrl = async () => {
@@ -26,27 +27,8 @@ struct SearchPage {
     this.serverUrl = res
   }
 
-  @Builder
-  buildSearchBar() {
-    Column() {
-      Search({ value: this.name, placeholder: '搜索内容' })
-        .searchButton('搜索')
-        .placeholderColor(Color.Gray)
-        .placeholderFont({ size: 16 })
-        .onSubmit((value: string) => {
-          this.isLoading = true
-          this.name = value
-          this.fetchSearch()
-        })
-        .defaultFocus(true)
-        .enableKeyboardOnFocus(true)
-    }
-    .width('80%')
-    .margin({ right: 15 })
-  }
-
   build() {
-    NavDestination() {
+    NavDestination(){
       Stack() {
         Scroll() {
           Column() {
@@ -95,16 +77,14 @@ struct SearchPage {
           LoadingView()
         }
       }
-
     }
-    .menus(this.buildSearchBar())
+    .title('收藏')
     .padding({ top: px2vp(AppUtil.getStatusBarHeight()) })
     .backgroundColor($r('sys.color.background_secondary'))
-
   }
 }
 
 @Builder
-export function SearchPageBuilder() {
-  SearchPage()
+export function CollectionPageBuilder(){
+  CollectionPage()
 }

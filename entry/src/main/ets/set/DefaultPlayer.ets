@@ -1,4 +1,4 @@
-import { PreferencesUtil } from "@pura/harmony-utils"
+import { AppUtil, PreferencesUtil } from "@pura/harmony-utils"
 
 @Component
 struct DefaultPlayer {
@@ -81,7 +81,7 @@ struct DefaultPlayer {
       .margin(10)
     }
     .title('默认播放器')
-    .padding({ top: 40 })
+    .padding({ top: px2vp(AppUtil.getStatusBarHeight()) })
     .backgroundColor($r('sys.color.background_secondary'))
   }
 }

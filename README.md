@@ -23,4 +23,4 @@
 
 - 如果你喜欢本项目，觉得本项目还不错，可以支持一下作者。
 
-<img src="images/SKM.jpg" width="200" alt="">
+<img src="images/ZSM.png" width="200" alt="">
